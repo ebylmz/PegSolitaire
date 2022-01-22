@@ -1,5 +1,4 @@
-import javax.imageio.plugins.tiff.ExifTIFFTagSet;
-import javax.swing.JFrame;
+// import javax.swing.JFrame;
 
 public class TestPegSolitaire {
     public static void main(String[] args) {
