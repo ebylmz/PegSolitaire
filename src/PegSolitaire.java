@@ -11,23 +11,25 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
+// import javax.swing.border.Border;
+import javax.swing.SwingUtilities;
 
-public class PegSolitaire extends JFrame implements ActionListener {    
+public class PegSolitaire extends JFrame {    
     private JPanel __statusPanel;
     private JPanel __boardPanel;
     private JLabel __textField;
-    private JButton __cellButtons[][];
+    private JButton __gameBoard[][];
     private JButton __undoBtn;
-    private JButton __startBtn;
-    private JButton __endBtn;
     private Movement __mov;   // keeps the current movement (necassary for undo movement)
     private int __numOfMov;
     private int __score;
-    private Color __bgMainColor;
-    private Color __bgSecColor;
-    private Color __bgHoverColor;
-    private Color __fgColor;
+    boolean __isSelected;
+    final private Color BG_MAIN_COLOR = new Color(28, 34, 38);
+    final private Color BG_SEC_COLOR = new Color(143, 155, 166);
+    final private Color HOVER_COLOR = new Color(0xF42181);
+    final private Color FG_COLOR = new Color(217, 143, 7);
+    private EventHandler handler;
+
 
     public PegSolitaire () {
         super("Peg Solitaire");
@@ -36,27 +38,23 @@ public class PegSolitaire extends JFrame implements ActionListener {
         setLayout(new BorderLayout());
         setVisible(true);
 
-        __bgMainColor = new Color(28, 34, 38);
-        __bgSecColor = new Color(143, 155, 166);
-        __fgColor = new Color(217, 143, 7);
-        __bgHoverColor = new Color(0, 63, 99);
-        getContentPane().setBackground(__bgMainColor);   //???????????????????????????????
+        handler = new EventHandler();
+        __isSelected = false;
+
+        getContentPane().setBackground(BG_MAIN_COLOR);   //???????????????????????????????
 
         // set board Panel (keeps each buttons to represent cells of PegSolitaire)
         __boardPanel = new JPanel();
         //! setBoard function shoul implement these
         __boardPanel.setLayout(new GridLayout(9, 9)); //!!!!!!
-        __boardPanel.setBackground(__bgMainColor);
+        __boardPanel.setBackground(BG_MAIN_COLOR);
         add(__boardPanel);
         //! Select the board type
 
         // initialize the game board with related informations (init __score, __numOfMov) 
         SetGermanBoard();
-        setScore();
-        __numOfMov = 0;
-        // initialize movement by giving current game board (__cellButtons)
-        __mov = new Movement(__cellButtons); 
-        __startBtn = __endBtn = null;
+        // initialize movement by giving current game board (__gameBoard)
+        __mov = new Movement(__gameBoard); 
         
         // set status panel (shows current game status such as __score, __numOfMov)
         __statusPanel = new JPanel();
@@ -66,8 +64,8 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
         // set __textField as center of __statusPanel
         __textField = new JLabel();
-        __textField.setBackground(__bgMainColor);
-        __textField.setForeground(__fgColor);
+        __textField.setBackground(BG_MAIN_COLOR);
+        __textField.setForeground(FG_COLOR);
         __textField.setHorizontalAlignment(JLabel.CENTER);
         __textField.setText(String.format("Score: %d \t #movements: 0", __score));
         __textField.setOpaque(true);
@@ -76,52 +74,28 @@ public class PegSolitaire extends JFrame implements ActionListener {
         // add undo button
         __undoBtn = new JButton("undo");
         // __undoBtn.setPreferredSize(new Dimension(50, 50));
-        __undoBtn.addActionListener(this);
+        __undoBtn.addActionListener(handler);
         __statusPanel.add(__undoBtn, BorderLayout.WEST);
+
+        setGameStatus(score(), 0);
+        // update the game frame
+        SwingUtilities.updateComponentTreeUI(this);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        JButton selectedBtn = (JButton) e.getSource();
-        // ignore selection of the cell which are Wall("") or Empty(" ") cells
-        if (selectedBtn == __undoBtn) {
-            System.out.println("fsdlfnksdfndsklgnfdklgn");
-            __mov.undoMovement();
-        }
-        else if (! selectedBtn.getText().equals("")) {
-            // if start button is selected, make movement with end buttons
-            if (__startBtn == null) {
-                __startBtn = selectedBtn;
-                // set hover effect to selected btn)
-                __startBtn.setBackground(__bgHoverColor);
-            }
-            else if (e.getSource() != __startBtn) {
-                // set and apply movement
-                __endBtn = selectedBtn;
-                __startBtn.setBackground(__bgHoverColor);
-                __mov.setPosition(__startBtn, __endBtn);
-                if (__mov.applyMovement()) {
-                    ++__numOfMov; // new movement made
-                    --__score;    // one peg removed, update the game __score
-                    __textField.setText(String.format("Score: %d \t #movements: %d", __score, __numOfMov));
-                }
-                else
-                    JOptionPane.showMessageDialog(this, "Illegal movement", "Error", JOptionPane.ERROR_MESSAGE);
-    
-                // set button backgroundColor as default
-                __startBtn.setBackground(__bgMainColor);
-                __endBtn.setBackground(__bgMainColor);
-    
-                // set movement references as null for next movement                       
-                __startBtn = __endBtn = null;   
-    
-                //! is it true to be place here 
-                // Check if game is over 
-                if (isGameOver()) 
-                    JOptionPane.showMessageDialog(
-                        this, String.format("Game is over. Your __score: %d", __score));
-            }
-        }
+    private void setGameStatus (int score, int numOfMov) {
+        __score = score;
+        __numOfMov = numOfMov;
+        if (__textField != null)
+            __textField.setText(String.format("remaining peg: %d \t #movements: %d", __score, __numOfMov));
+    }
+
+    public int score () {
+        int score = 0;
+        for (int i = 0; i < __gameBoard.length; ++i)
+            for (int j = 0; j < __gameBoard[i].length; ++j)
+                if (__gameBoard[i][j].getText().equals("P"))
+                    ++score;
+        return score;
     }
 
     public void SetGermanBoard () {
@@ -129,57 +103,149 @@ public class PegSolitaire extends JFrame implements ActionListener {
             {"", "", "", "P", "P", "P", "", "", ""}, 
             {"P", "P", "P", "P", "P", "P", "P", "P", "P"}};
         
-        __cellButtons = new JButton[9][9];
+        __gameBoard = new JButton[9][9];
 
-        for (int i = 0; i < __cellButtons.length; ++i) {
+        for (int i = 0; i < __gameBoard.length; ++i) {
             int col = (3 <= i && i < 6) ? 1 : 0;
 
-            for (int j = 0; j < __cellButtons[i].length; ++j) {
-                __cellButtons[i][j] = new JButton(cellValue[col][j]);
-                __cellButtons[i][j].addActionListener(this);
-                __cellButtons[i][j].setOpaque(true);  //????????????? is needed
+            for (int j = 0; j < __gameBoard[i].length; ++j) {
+                __gameBoard[i][j] = new JButton(cellValue[col][j]);
+                __gameBoard[i][j].addActionListener(handler);
+                __gameBoard[i][j].setOpaque(true);  //????????????? is needed
                 if (cellValue[col][j].equals("P")) {
-                    __cellButtons[i][j].setBackground(__bgMainColor);
-                    __cellButtons[i][j].setForeground(__fgColor);
+                    __gameBoard[i][j].setBackground(BG_MAIN_COLOR);
+                    __gameBoard[i][j].setForeground(FG_COLOR);
                 }
                 else {
-                    __cellButtons[i][j].setBackground(__bgSecColor);
+                    __gameBoard[i][j].setBackground(BG_SEC_COLOR);
                 }
-                __boardPanel.add(__cellButtons[i][j]);
+                __boardPanel.add(__gameBoard[i][j]);
             }
         }
-        __cellButtons[4][4].setText(" "); // center empty cell
+        __gameBoard[4][4].setText(" "); // center empty cell
     }   
 
+    public boolean canMakeMovement (JButton btn) {
+        Movement mov = new Movement (__gameBoard, btn);
+        return  mov.setDownMovement() || 
+                mov.setUpMovement() ||
+                mov.setLeftMovement() ||
+                mov.setRightMovement();
+    }
+
     public boolean isGameOver () {
-        for (int i = 0; i < __cellButtons.length; ++i)    
-            for (int j = 0; j < __cellButtons[i].length; ++j)
-                if (__mov.isMovable(__cellButtons[i][j]))   //!!!!!!!!!!!!
+        for (int i = 0; i < __gameBoard.length; ++i)    
+            for (int j = 0; j < __gameBoard[i].length; ++j)
+                if (canMakeMovement(__gameBoard[i][j])) 
                     return false;
         return true;
     }
 
-    public void setScore () {
-        __score = 0;
-        for (int i = 0; i < __cellButtons.length; ++i)
-            for (int j = 0; j < __cellButtons[i].length; ++j)
-                if (__cellButtons[i][j].getText().equals("P"))
-                    ++__score;
+    private class EventHandler implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JButton selectedBtn = (JButton) e.getSource();
+            if (selectedBtn == __undoBtn)
+                undo();
+            // ignore selection of the cell which are Wall("") or Empty(" ") cells
+            else if (! selectedBtn.getText().equals("")) {
+                // if start button is selected, make movement with end buttons
+                if (! __isSelected) {
+                    __isSelected = true;
+                    __mov.setStart(selectedBtn);
+                    selectedBtn.setForeground(HOVER_COLOR); // set hover effect to button
+                }
+                else if (selectedBtn != __mov.start()) {
+                    __mov.setEnd(selectedBtn);
+                    selectedBtn.setForeground(HOVER_COLOR); // set hover effect to button
+                    
+                    // apply setted movement
+                    if (move() == true) {
+                        //! is it true to be place here 
+                        // check if game is over after each legal movement 
+                        if (isGameOver()) 
+                            JOptionPane.showMessageDialog(null, String.format("Game is over. Your score: %d", __score));
+                    }
+                    /*
+                    else
+                        JOptionPane.showMessageDialog(null, "Illegal movement", "Error", JOptionPane.ERROR_MESSAGE);
+                    */
+                    // set button backgroundColor as default
+                    __mov.start().setForeground(FG_COLOR);
+                    __mov.end().setForeground(FG_COLOR);
+                    __isSelected = false;        
+                }
+            }
+        }
+    }
+
+    public boolean undo () {
+        // if existing movement is valid, apply reverse of it
+        if (__mov.start() != null && __mov.jump() != null && __mov.end() != null) {
+            __mov.start().setText("P");
+            __mov.jump().setText("P");
+            __mov.end().setText(" ");
+            setGameStatus(__score + 1, __numOfMov - 1);
+
+            // undo is permitted for just one step, 
+            // so after undo there should be no movement left 
+            __mov.setPosition(null, null);
+            return true;
+        }
+        return false;
     }
     
+    public boolean move () {
+        if (__mov.isValidMovement()) {
+            __mov.start().setText(" ");
+            __mov.jump().setText(" ");
+            __mov.end().setText("P");
+            setGameStatus(__score - 1, __numOfMov + 1);
+            return true;
+        }
+        else 
+            return false;
+    }
+    
+    
+    public boolean moveRandom () {
+        Random rand = new Random();
+        // choose an random starting position
+        int row = rand.nextInt(__gameBoard.length);
+        int col = rand.nextInt(__gameBoard[row].length);
+    
+        // start with selected position (row, col) and try each cell to make movement
+        for (int i = 0; i < __gameBoard.length; ++i) {
+            for (int j = 0; j < __gameBoard[i].length; ++j) {
+                // check movement
+                __mov.setStart(__gameBoard[row][col]);
+                if (__mov.setRightMovement() || 
+                    __mov.setLeftMovement() ||
+                    __mov.setUpMovement() || 
+                    __mov.setDownMovement()) {
+                        move();
+                        return true;
+                }
+                // iterate coloumn
+                col = (col == __gameBoard[row].length - 1) ? 0 : col + 1;
+            }
+            // iterate row
+            row = (row == __gameBoard.length - 1) ? 0 : row + 1;
+        }
+        return false;
+    }    
 
     public static class Movement {
-        private JButton[][] __board;
-        private JButton __startBtn;
-        private JButton __jumpBtn;
-        private JButton __endBtn;
+        private JButton[][] __board;    // game board for checking validty of movement
+        private JButton __startBtn;     // start position of movement
+        private JButton __jumpBtn;      // jump position of movement (between start and end)
+        private JButton __endBtn;       // end position of movement
 
         public Movement (JButton[][] board, JButton start, JButton end) {
             __board = board;
             __startBtn = start;
             __endBtn = end;
             __jumpBtn = null;
-
         }
 
         public Movement (JButton[][] board, JButton start) {this(board, start, null);}
@@ -193,155 +259,137 @@ public class PegSolitaire extends JFrame implements ActionListener {
         public JButton jump () {return __jumpBtn;}
         public JButton[][] board () {return __board;}
 
-        public void setPosition (JButton start, JButton end) {
-            // be sure given JButtons are in current board
-            if (findLocation(start) != null && (end == null || findLocation(end) != null)) {
-                __startBtn = start;
-                __endBtn = end;
-                // __jumpBtn is depend on start and end btn so set as null 
-                __jumpBtn = null;  // !!!
-            }
-            else 
-                throw new InvalidParameterException("given JButtons not exist in current board");
+        public void setStart (JButton start) throws InvalidParameterException {
+            // be sure given JButton is in the current game board
+            if (start != null && findLocation(start) == null)
+                throw new InvalidParameterException("given JButtons not exist in game board");
+            __startBtn = start;
+            // __jumpBtn is depend on start and end btn so set as null 
+            // __jumpBtn = null;  // !!!
         }
 
-        public void setPosition (JButton start) throws InvalidParameterException {setPosition(start, null);}
+        public void setEnd (JButton end) {
+            // be sure given JButton is in the current game board
+            if (end != null && findLocation(end) == null)
+                throw new InvalidParameterException("given JButtons not exist in game board");
+            __endBtn = end;
+            // __jumpBtn is depend on start and end btn so set as null 
+            // __jumpBtn = null;  // !!!
+        }
+
+        public void setJump () throws InvalidParameterException {
+            if (board() == null || start() == null || end() == null)
+                throw new NullPointerException("no enough information to find jump button");
+    
+            int[] startIndexes = findLocation(start());
+            int[] endIndexes = findLocation(end());
+            
+            if (startIndexes != null && endIndexes != null) {
+                int row = -1;    // jump button row
+                int col = -1;    // jump button coloumn
+
+                // starBtn and endBtn are at same row
+                if (startIndexes[0] == endIndexes[0]) {
+                    row = endIndexes[0];
+                    
+                    int diff = endIndexes[1] - startIndexes[1];
+                    if (diff == 2)
+                        col = endIndexes[1] - 1;
+                    else if (diff == -2)
+                        col = endIndexes[1] + 1;
+                }
+                // starBtn and endBtn are at same coloumn
+                else if (startIndexes[1] == endIndexes[1]) {
+                    col = endIndexes[1];
+                    
+                    int diff = endIndexes[0] - startIndexes[0];
+                    if (diff == 2)
+                        row = endIndexes[0] - 1;
+                    else if (diff == -2)
+                        row = endIndexes[0] + 1;
+                }
+                
+                // be sure jump row and col are in range, otherwise set it as null 
+                __jumpBtn = (0 <= row && row < __board.length && 0 <= col && col < __board[row].length) ?
+                    __board[row][col] : null;
+            }
+        }
+
+        public void setPosition (JButton start, JButton end) throws InvalidParameterException {
+            try {
+                setStart(start);
+                setEnd(end);
+            }
+            catch (InvalidParameterException e) {
+                __startBtn = __endBtn = __jumpBtn = null; //!!!                NOT A GOOD DESIGN
+                throw e;
+            }
+        }
 
         public void setBoard (JButton[][] board) {
             __board = board;
             // reset the movement positions
             __startBtn = __jumpBtn = __endBtn = null;
-        }
+        } 
 
-        public boolean undoMovement () {
-            // if existing movement is valid, apply revere of it
-            if (isValidMovement()) {
-                __startBtn.setText("P");
-                __jumpBtn.setText("P");
-                __endBtn.setText(" ");
-                return true;
-            }
-            else 
-                return false;
-        }
-
-        public boolean isMovable (JButton start) {
-            setPosition(start); //!!!
-            return isMovable();
-        }
-
-        public boolean isMovable () throws NullPointerException {
-            if (start() == null)
-                throw new NullPointerException("null start referance");
-
-            boolean r = false;
-
-            if (start().getText().equals("P")) {
-                int[] indexes = findLocation(start());
-                //! it would be better to check if __startBtn different than null in <Direction>Movement
-                if (indexes != null)
-                    return  rightMovement(__startBtn, __jumpBtn, __endBtn)  ||
-                            leftMovement(__startBtn, __jumpBtn, __endBtn) ||
-                            upMovement(__startBtn, __jumpBtn, __endBtn) ||
-                            downMovement(__startBtn, __jumpBtn, __endBtn);
-            }
-            return r;
-        }
-
-        public boolean applyMovement () {
-            if (isValidMovement()) {
-                start().setText(" ");
-                jump().setText(" ");
-                end().setText("P");
-                return true;
-            }
-            else 
-                return false;
-        }
-
-        public boolean applyRandomMovement () {
-            Random rand = new Random();
-            // choose an random starting position
-            int row = rand.nextInt(__board.length);
-            int col = rand.nextInt(__board[row].length);
-
-            // start with selected position (row, col) and try each cell to make movement
-            for (int i = 0; i < __board.length; ++i) {
-                for (int j = 0; j < __board[i].length; ++j) {
-                    // check movement
-                    setPosition(__board[row][col]);
-                    if (rightMovement(__startBtn, __jumpBtn, __endBtn) || leftMovement(__startBtn, __jumpBtn, __endBtn) ||
-                        upMovement(__startBtn, __jumpBtn, __endBtn) || downMovement(__startBtn, __jumpBtn, __endBtn)) {
-                            applyMovement();
-                            return true;
-                    }
-                    // iterate coloumn
-                    col = (col == __board[row].length - 1) ? 0 : col + 1;
-                }
-                // iterate row
-                row = (row == __board.length - 1) ? 0 : row + 1;
-            }
-            return false;
-        }
-
-        public boolean upMovement (JButton start, JButton jump, JButton end) throws InvalidParameterException {
-            int[] indexes = findLocation(start);
+        public boolean setUpMovement () throws NullPointerException {
+            int[] indexes = findLocation(__startBtn);
             if (indexes == null)
-                throw new InvalidParameterException("start either null or not in the board");
+                throw new NullPointerException("null start position for movement");
 
             int row = indexes[0];
             int col = indexes[1];
             if (0 <= row - 2 && __board[row - 1][col].getText().equals("P") && __board[row - 2][col].getText().equals(" ")) {                
-                jump = __board[row - 1][col];
-                end = __board[row - 2][col];
+                __jumpBtn = __board[row - 1][col];
+                __endBtn = __board[row - 2][col];
                 return true;
             }
             else
                 return false;
         }
 
-        public boolean downMovement (JButton start, JButton jump, JButton end) throws InvalidParameterException {
-            int[] indexes = findLocation(start);
+        public boolean setDownMovement () throws NullPointerException {
+            int[] indexes = findLocation(__startBtn);
             if (indexes == null)
-                throw new InvalidParameterException("start either null or not in the board");
+                throw new NullPointerException("null start position for movement");
 
             int row = indexes[0];
             int col = indexes[1];
             if (row + 2 < __board.length && __board[row + 1][col].getText().equals("P") && __board[row + 2][col].getText().equals(" ")) {
-                jump = __board[row + 1][col];
-                end = __board[row + 2][col];
+                __jumpBtn = __board[row + 1][col];
+                __endBtn = __board[row + 2][col];
                 return true;
             }
             else 
                 return false;
         }
 
-        public boolean leftMovement (JButton start, JButton jump, JButton end) throws InvalidParameterException {
-            int[] indexes = findLocation(start);
+        public boolean setLeftMovement () throws NullPointerException {
+            int[] indexes = findLocation(__startBtn);
             if (indexes == null)
-                throw new InvalidParameterException("start either null or not in the board");
+                throw new NullPointerException("null start position for movement");
 
             int row = indexes[0];
             int col = indexes[1];
             if (0 <= col - 2 && __board[row][col - 1].getText().equals("P") && __board[row][col - 2].getText().equals(" ")) {
-                jump = __board[row][col - 1];
-                end = __board[row][col - 2];
+                __jumpBtn = __board[row][col - 1];
+                __endBtn = __board[row][col - 2];
                 return true;
             }
             else 
                 return false;
         }
 
-        public boolean rightMovement (JButton start, JButton jump, JButton end) throws InvalidParameterException {
-            int[] indexes = findLocation(start);
+        public boolean setRightMovement () throws NullPointerException {
+            int[] indexes = findLocation(__startBtn);
             if (indexes == null)
-                throw new InvalidParameterException("start either null or not in the board");
+                throw new NullPointerException("null start position for movement");
 
             int row = indexes[0];
             int col = indexes[1];
             if (col + 2 < __board[col].length && __board[row][col + 1].getText().equals("P") && __board[row][col + 2].getText().equals(" ")) {
-                jump = __board[row][col + 1];
-                end = __board[row][col + 2];
+                __jumpBtn = __board[row][col + 1];
+                __endBtn = __board[row][col + 2];
                 return true;
             }
             else 
@@ -349,16 +397,10 @@ public class PegSolitaire extends JFrame implements ActionListener {
         }
 
         public boolean isValidMovement () {
-            // find and assign the __jumpBtn if it's legal
-            if (__jumpBtn == null) {
-                int[] indexes = findLocation(__startBtn, __endBtn); 
-                // jump indexes cannot create becaue of inproper start and end positions
-                if (indexes == null)
-                    return false;
-                __jumpBtn = __board[indexes[0]][indexes[1]];
-            }
-
-            return  __startBtn.getText().equals("P") && 
+            setJump();
+            // jump becomes null, if start and end buttons are not in proper position
+            return  jump() != null &&
+                    __startBtn.getText().equals("P") && 
                     __jumpBtn.getText().equals("P") && 
                     __endBtn.getText().equals(" ");
         }
@@ -371,55 +413,12 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
             for (int i = 0; i < __board.length && indexes == null; ++i) 
                 for (int j = 0; j < __board[i].length && indexes == null; ++j)
-                    if (__board[i][j].equals(btn)) {
+                    if (__board[i][j] == btn) {
                         indexes = new int[2];
                         indexes[0] = i; // assign row
                         indexes[1] = j; // assign col
                     }
             return indexes;
-        }
-
-        // returns jump indexes of movement
-        public int[] findLocation (JButton start, JButton end) throws NullPointerException {
-            if (board() == null || start == null || end == null)
-                throw new NullPointerException("null game board");
-
-            int[] startIndexes = findLocation(__startBtn);
-            int[] endIndexes = findLocation(__endBtn);
-            int[] jumpIndexes = null;
-            int row = -1;    // jump button row
-            int col = -1;    // jump button coloumn
-
-            if (startIndexes != null && endIndexes != null) {
-                // starBtn and __endBtn are at same row
-                if (startIndexes[0] == endIndexes[0]) {
-                    row = endIndexes[0];
-                    
-                    int diff = endIndexes[1] - startIndexes[1];
-                    if (diff == 2)
-                        col = endIndexes[1] - 1;
-                    else if (diff == -2)
-                        col = endIndexes[1] + 1;
-                }
-                // starBtn and __endBtn are at same coloumn
-                else if (startIndexes[1] == endIndexes[1]) {
-                    col = endIndexes[1];
-                    
-                    int diff = endIndexes[0] - startIndexes[0];
-                    if (diff == 2)
-                        row = endIndexes[0] - 1;
-                    else if (diff == -2)
-                        row = endIndexes[0] + 1;
-                }
-                
-                // check if jump indexes in range 
-                if (0 <= row && row < __board.length && 0 <= col && col < __board[row].length) {
-                    jumpIndexes = new int[2];
-                    jumpIndexes[0] = row;
-                    jumpIndexes[1] = col;
-                }
-            }
-            return jumpIndexes;
         }
     } // end of Movement Class 
 }
