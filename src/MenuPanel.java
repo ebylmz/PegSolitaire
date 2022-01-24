@@ -19,7 +19,7 @@ public class MenuPanel extends JPanel implements ActionListener{
     public static enum Option {NEW_GAME, CONTINUE_GAME, EXIT_GAME};
 
     private JButton[] __btn;
-    private Option __selected;
+    private Option __selected; //!!
 
     public MenuPanel () {
         setBackground(Color.BLACK);

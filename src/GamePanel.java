@@ -1,12 +1,11 @@
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
+// import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
 import java.util.Random;
 import java.awt.event.ActionEvent;
-import javax.swing.JLabel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -16,11 +15,12 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public static enum BoardType {FRENCH, GERMAN, ASYMETRICAL, ENGLISH, DIAMOND, TRIANGULAR}
 
-    private JPanel __statusPanel;
+    // private JPanel __statusPanel;
     private JPanel __boardPanel;
-    private JLabel __textField;
+    private JPanel __controlPanel;
     private JButton __gameBoard[][];
     private JButton __undoBtn;
+    private JButton __homeBtn;
     private Movement __curMove; // keeps the current movement (necassary for undo movement)
     private Movement __lastMove;
     private int __numOfMov;
@@ -30,7 +30,7 @@ public class GamePanel extends JPanel implements ActionListener {
     final private Color HOVER_COLOR = new Color(0xF42181);
     final private Color FG_COLOR = new Color(217, 143, 7);
 
-    public GamePanel() {
+    public GamePanel (JButton homeButton) {
         setLayout(new BorderLayout());
 
         // getContentPane().setBackground(BG_MAIN_COLOR); //
@@ -39,6 +39,7 @@ public class GamePanel extends JPanel implements ActionListener {
         setGameBoard(BoardType.GERMAN);
         
         // set status panel (shows current game status such as numOfMov, numOfPeg)
+       /*
         __statusPanel = new JPanel();
         __statusPanel.setLayout(new BorderLayout());
         __statusPanel.setPreferredSize(new Dimension(600, 50)); // 600 with & 100 height
@@ -53,21 +54,32 @@ public class GamePanel extends JPanel implements ActionListener {
         __textField.setText(String.format("#peg: %d  #movements: 0", __numOfPeg, __numOfMov));
         __textField.setOpaque(true); // ??????????????????????
         __statusPanel.add(__textField, BorderLayout.CENTER);
-
-        // add undo button
-        ImageIcon undoIcon = new ImageIcon("../img/undo.png");
+    */
+        
+    // add undo button
         __undoBtn = new JButton();
         __undoBtn.setBackground(BG_SEC_COLOR);
         // __undoBtn.setForeground(FG_COLOR);
         // __undoBtn.setHorizontalTextPosition(JButton.CENTER);
         // __undoBtn.setVerticalTextPosition(JButton.BOTTOM);
-        __undoBtn.setIcon(undoIcon);
+        __undoBtn.setIcon(new ImageIcon("../img/undo.png"));
 
         // __undoBtn.setPreferredSize(new Dimension(50, 50));
         __undoBtn.addActionListener(this);
         __undoBtn.setEnabled(false); // initially not clickable
-        __statusPanel.add(__undoBtn, BorderLayout.WEST);
-
+        
+        // home button
+        __homeBtn = homeButton; // homeButton given as parameter
+        __homeBtn.setBackground(BG_SEC_COLOR);
+        __homeBtn.setIcon(new ImageIcon("../img/home.png"));
+        // __homeBtn.addActionListener(this);
+        
+        // set control panel which keeps undo and home buttons 
+        __controlPanel = new JPanel(new BorderLayout());
+        add(__controlPanel, BorderLayout.NORTH);    // at the top of the super panel
+        __controlPanel.add(__undoBtn, BorderLayout.WEST);
+        __controlPanel.add(__homeBtn, BorderLayout.EAST);
+        
         // update the game frame
         // SwingUtilities.updateComponentTreeUI(this);  
     }
@@ -86,10 +98,12 @@ public class GamePanel extends JPanel implements ActionListener {
         return n;
     }
 
+    /*
     private void setGameStatus () {
         if (__textField != null)
             __textField.setText(String.format("#peg: %d \t #movements: %d", __numOfPeg, __numOfMov));
     }
+    */
 
     public void setGameBoard (BoardType t) {
         switch (t) {
@@ -225,7 +239,12 @@ public class GamePanel extends JPanel implements ActionListener {
             // apply movement
             if (move(__curMove)) {
                 if (isGameOver()) 
-                    JOptionPane.showMessageDialog(null, String.format("Game is over. Your score: %.1f", score()));
+                    JOptionPane.showMessageDialog(this, String.format(
+                                "      Game is over\n" + 
+                                "Number of Movement: %d\n" + 
+                                "   Remaining Peg: %d", 
+                                __numOfMov, __numOfPeg
+                    ), "Game is Over", JOptionPane.INFORMATION_MESSAGE);    
             }
             // else JOptionPane.showMessageDialog(null, "Illegal movement", "Error", JOptionPane.ERROR_MESSAGE);
 
@@ -245,7 +264,6 @@ public class GamePanel extends JPanel implements ActionListener {
             mov.end().setText("P");
             ++__numOfMov;
             --__numOfPeg;
-            setGameStatus();
             // set last movement as given validated movement
             __lastMove = mov.clone();
             if (!__undoBtn.isEnabled())
@@ -294,7 +312,6 @@ public class GamePanel extends JPanel implements ActionListener {
             __lastMove.end().setText(" ");
             --__numOfMov;
             ++__numOfPeg;
-            setGameStatus();            
             __undoBtn.setEnabled(false);
             // undo is permitted for just one step,
             // so after undo there should be no movement left
