@@ -1,6 +1,5 @@
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
-import java.awt.Color;
 // import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
@@ -31,42 +30,18 @@ public class GamePanel extends JPanel implements ActionListener {
     private int __numOfMov;
     private int __numOfPeg;
 
-    final private Color BG_MAIN_COLOR = new Color(28, 34, 38);
-    final private Color BG_SEC_COLOR = new Color(143, 155, 166);
-    final private Color HOVER_COLOR = new Color(0xE10550);
-    final private Color FG_MAIN_COLOR = new Color(0xE10550);
-    final private Color FG_SEC_COLOR = new Color(0x129468);
-
     public GamePanel (JButton homeButton) {
         setLayout(new BorderLayout());
 
-        // getContentPane().setBackground(BG_MAIN_COLOR); //
+        // getContentPane().setBackground(ColorScheme.BLACK.get()); //
 
         //! initialize the game board selected by user
         setGameBoard(BoardType.GERMAN);
-        
-        // set status panel (shows current game status such as numOfMov, numOfPeg)
-       /*
-        __statusPanel = new JPanel();
-        __statusPanel.setLayout(new BorderLayout());
-        __statusPanel.setPreferredSize(new Dimension(600, 50)); // 600 with & 100 height
-        __statusPanel.setBackground(BG_MAIN_COLOR);
-        add(__statusPanel, BorderLayout.NORTH);
 
-        // set __textField as center of __statusPanel
-        __textField = new JLabel();
-        __textField.setBackground(BG_MAIN_COLOR);
-        __textField.setForeground(FG_MAIN_COLOR);
-        __textField.setHorizontalAlignment(JLabel.CENTER);
-        __textField.setText(String.format("#peg: %d  #movements: 0", __numOfPeg, __numOfMov));
-        __textField.setOpaque(true); // ??????????????????????
-        __statusPanel.add(__textField, BorderLayout.CENTER);
-    */
-        
         // add undo button
         __undoBtn = new JButton();
-        __undoBtn.setBackground(BG_MAIN_COLOR);
-        // __undoBtn.setForeground(FG_MAIN_COLOR);
+        __undoBtn.setBackground(ColorScheme.BLACK.get());
+        // __undoBtn.setForeground(ColorScheme.RED.get());
         // __undoBtn.setHorizontalTextPosition(JButton.CENTER);
         // __undoBtn.setVerticalTextPosition(JButton.BOTTOM);
         __undoBtn.setIcon(new ImageIcon("../img/undo.png"));
@@ -77,19 +52,16 @@ public class GamePanel extends JPanel implements ActionListener {
         
         // home button
         __homeBtn = homeButton; // homeButton given as parameter
-        __homeBtn.setBackground(BG_MAIN_COLOR);
+        __homeBtn.setBackground(ColorScheme.BLACK.get());
         __homeBtn.setIcon(new ImageIcon("../img/home.png"));
         // __homeBtn.addActionListener(this);
         
         // set control panel which keeps undo and home buttons 
         __controlPanel = new JPanel(new BorderLayout());
         add(__controlPanel, BorderLayout.NORTH);    // at the top of the super panel
-        __controlPanel.setBackground(BG_MAIN_COLOR);
+        __controlPanel.setBackground(ColorScheme.BLACK.get());
         __controlPanel.add(__undoBtn, BorderLayout.WEST);
         __controlPanel.add(__homeBtn, BorderLayout.EAST);
-        
-        // update the game frame
-        // SwingUtilities.updateComponentTreeUI(this);  
     }
 
     public double score () {
@@ -138,7 +110,7 @@ public class GamePanel extends JPanel implements ActionListener {
             remove(__boardPanel);
         __boardPanel = new JPanel();
         __boardPanel.setLayout(new GridLayout(9, 9)); 
-        __boardPanel.setBackground(BG_MAIN_COLOR);
+        __boardPanel.setBackground(ColorScheme.BLACK.get());
         add(__boardPanel);
 
         final String cellValue[][] = {
@@ -156,12 +128,12 @@ public class GamePanel extends JPanel implements ActionListener {
                 __gameBoard[i][j].setOpaque(true); // ????????????? is needed
                 if (cellValue[col][j].equals("P")) {
                     __gameBoard[i][j].setText("P");
-                    __gameBoard[i][j].setBackground(BG_MAIN_COLOR);
-                    __gameBoard[i][j].setForeground(FG_MAIN_COLOR);
+                    __gameBoard[i][j].setBackground(ColorScheme.BLACK.get());
+                    __gameBoard[i][j].setForeground(ColorScheme.RED.get());
                     __gameBoard[i][j].addActionListener(this);
                 } else {
                     // set non-clicable buttons (Walls)
-                    __gameBoard[i][j].setBackground(BG_SEC_COLOR);
+                    __gameBoard[i][j].setBackground(ColorScheme.GRAY.get());
                     __gameBoard[i][j].setEnabled(false);
                 }
                 __boardPanel.add(__gameBoard[i][j]);
@@ -177,9 +149,8 @@ public class GamePanel extends JPanel implements ActionListener {
         // set board Panel (keeps each buttons to represent cells of PegSolitaire)
         __boardPanel = new JPanel();
         __boardPanel.setLayout(new GridLayout(10, 10));
-        __boardPanel.setBackground(BG_MAIN_COLOR);
+        __boardPanel.setBackground(ColorScheme.BLACK.get());
         add(__boardPanel);
-
         __gameBoard = new JButton[10][10];
 
         for (int i = 0; i < __gameBoard.length; ++i) {
@@ -187,12 +158,11 @@ public class GamePanel extends JPanel implements ActionListener {
                 __gameBoard[i][j] = new JButton();
                 if (i < 4 && j < 4) {
                     __gameBoard[i][j].setText("P");
-                    __gameBoard[i][j].setBackground(BG_MAIN_COLOR);
-                    __gameBoard[i][j].setForeground(FG_MAIN_COLOR);
+                    ColorScheme.setColor(__gameBoard[i][j], ColorScheme.BLACK, ColorScheme.RED);
                     __gameBoard[i][j].addActionListener(this);
                 }
                 else {
-                    __gameBoard[i][j].setBackground(BG_SEC_COLOR);
+                    ColorScheme.setColor(__gameBoard[i][j], ColorScheme.GRAY);
                     __gameBoard[i][j].setEnabled(false);
                 }
                 __boardPanel.add(__gameBoard[i][j]);
@@ -240,16 +210,16 @@ public class GamePanel extends JPanel implements ActionListener {
         if (selectedBtn.getText().equals("P")) {
                 __curMov.setStart(selectedBtn);
                 
-                selectedBtn.setForeground(FG_SEC_COLOR); // set hover effect on selected button
+                selectedBtn.setForeground(ColorScheme.GREEN.get()); // set hover effect on selected button
                 __nextPossibleBtn = __curMov.nextPossibleMov();
                 if (__nextPossibleBtn != null)
-                for (var btn : __nextPossibleBtn)
-                btn.setBackground(HOVER_COLOR); // set hover effect on selected button
+                    for (var btn : __nextPossibleBtn)
+                        btn.setBackground(ColorScheme.RED.get()); // set hover effect on selected button
             }
         }
         // if start button was selected, current selected button should be end button
         else if (selectedBtn != __curMov.start()) {
-            selectedBtn.setForeground(FG_SEC_COLOR); // set hover effect on selected button
+            selectedBtn.setForeground(ColorScheme.GREEN.get()); // set hover effect on selected button
             __curMov.setEnd(selectedBtn);
             // apply movement
             if (move(__curMov)) {
@@ -264,15 +234,15 @@ public class GamePanel extends JPanel implements ActionListener {
             // else JOptionPane.showMessageDialog(null, "Illegal movement", "Error", JOptionPane.ERROR_MESSAGE);
 
             // set selected buttons background color as default
-            __curMov.start().setForeground(FG_MAIN_COLOR);
-            __curMov.end().setForeground(FG_MAIN_COLOR);
+            __curMov.start().setForeground(ColorScheme.RED.get());
+            __curMov.end().setForeground(ColorScheme.RED.get());
             // set current Movement as null for next movement
             __curMov.setStart(null);
             __curMov.setEnd(null);
 
             if (__nextPossibleBtn != null)
                 for (var btn : __nextPossibleBtn)
-                    btn.setBackground(BG_MAIN_COLOR); // set hover effect on selected button
+                    btn.setBackground(ColorScheme.BLACK.get()); // set hover effect on selected button
         }
     }
 
