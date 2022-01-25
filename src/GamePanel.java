@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class GamePanel extends JPanel implements ActionListener {
+    public static enum GameMode {USER, COMPUTER}
 
     public static enum BoardType {FRENCH, GERMAN, ASYMETRICAL, ENGLISH, DIAMOND, TRIANGULAR}
 
@@ -30,13 +31,14 @@ public class GamePanel extends JPanel implements ActionListener {
     private int __numOfMov;
     private int __numOfPeg;
 
-    public GamePanel (JButton homeButton) {
+    public GamePanel (JButton homeButton, GameMode gameType, BoardType boardType) {
         setLayout(new BorderLayout());
 
         // getContentPane().setBackground(ColorScheme.BLACK.get()); //
-
-        //! initialize the game board selected by user
-        setGameBoard(BoardType.GERMAN);
+        //! NOT USED gameType !!!!!!!!!
+        
+        // initialize the game board selected by user
+        setGameBoard(boardType);
 
         // add undo button
         __undoBtn = new JButton();
@@ -86,16 +88,29 @@ public class GamePanel extends JPanel implements ActionListener {
     */
 
     public void setGameBoard (BoardType t) {
+        if (__boardPanel != null)
+            remove(__boardPanel);
+            
+        // set Board Panel (keeps each buttons to represent cells of PegSolitaire)
+        __boardPanel = new JPanel();
+        __boardPanel.setBackground(ColorScheme.BLACK.get());
+
         switch (t) {
             case FRENCH: 
                 setFrenchBoard();break;
             case GERMAN: 
                 setGermanBoard(); break;
-            case ASYMETRICAL: break;
-            case ENGLISH: break;
-            case DIAMOND: break;
-            case TRIANGULAR: break;
+            case ASYMETRICAL:
+                setAsymmetricalBoard();break;
+            case ENGLISH: 
+                setEnglishBoard(); break;
+            case DIAMOND: 
+                setDiamondBoard(); break;
+            case TRIANGULAR: 
+                setTriangleBoard(); break;
         }
+
+        add(__boardPanel);  // add board panel to the JFrame
         __numOfMov = 0;
         __numOfPeg = numOfPeg();
         // setGameStatus(); //!! NOT SURE
@@ -105,31 +120,23 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void setGermanBoard() {
-        // set board Panel (keeps each buttons to represent cells of PegSolitaire)
-        if (__boardPanel != null)
-            remove(__boardPanel);
-        __boardPanel = new JPanel();
         __boardPanel.setLayout(new GridLayout(9, 9)); 
-        __boardPanel.setBackground(ColorScheme.BLACK.get());
-        add(__boardPanel);
+        __gameBoard = new JButton[9][9];
 
         final String cellValue[][] = {
                 { "", "", "", "P", "P", "P", "", "", "" },
                 {"P", "P", "P", "P", "P", "P", "P", "P", "P"}
         };
 
-        __gameBoard = new JButton[9][9];
-
         for (int i = 0; i < __gameBoard.length; ++i) {
-            int col = (3 <= i && i < 6) ? 1 : 0;
+            int col = (3 <= i && i <= 5) ? 1 : 0;
 
             for (int j = 0; j < __gameBoard[i].length; ++j) {
                 __gameBoard[i][j] = new JButton();
                 __gameBoard[i][j].setOpaque(true); // ????????????? is needed
                 if (cellValue[col][j].equals("P")) {
                     __gameBoard[i][j].setText("P");
-                    __gameBoard[i][j].setBackground(ColorScheme.BLACK.get());
-                    __gameBoard[i][j].setForeground(ColorScheme.RED.get());
+                    ColorScheme.setColor(__gameBoard[i][j],  ColorScheme.BLACK, ColorScheme.RED);
                     __gameBoard[i][j].addActionListener(this);
                 } else {
                     // set non-clicable buttons (Walls)
@@ -143,32 +150,131 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void setFrenchBoard () {
-        if (__boardPanel != null)
-            remove(__boardPanel);
+        __boardPanel.setLayout(new GridLayout(7, 7));
+        initBoard(7, 7, "P");
 
-        // set board Panel (keeps each buttons to represent cells of PegSolitaire)
-        __boardPanel = new JPanel();
-        __boardPanel.setLayout(new GridLayout(10, 10));
-        __boardPanel.setBackground(ColorScheme.BLACK.get());
-        add(__boardPanel);
-        __gameBoard = new JButton[10][10];
+        for (int i = 0, n = 2; i < 2; ++i, --n)
+            for (int j = 0; j < n; ++j) 
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 0, n = 5; i < 2; ++i, ++n)
+            for (int j = n; j < 7; ++j) 
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 5, n = 1; i < 7; ++i, ++n)
+            for (int j = 0; j < n; ++j) 
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 5, n = 6; i < 7; ++i, --n)
+            for (int j = n; j < 7; ++j) 
+                setEmptyButton(__gameBoard[i][j]);
+        
+        __gameBoard[2][3].setText(" ");
+    }
+
+    private void setAsymmetricalBoard () {
+        __boardPanel.setLayout(new GridLayout(8, 8)); 
+        __gameBoard = new JButton[8][8];
+
+        final String cellValue[][] = {
+                { "", "", "P", "P", "P", "", "", ""},
+                {"P", "P", "P", "P", "P", "P", "P", "P"}
+        };
 
         for (int i = 0; i < __gameBoard.length; ++i) {
+            int col = (3 <= i && i <= 5) ? 1 : 0;
+
             for (int j = 0; j < __gameBoard[i].length; ++j) {
                 __gameBoard[i][j] = new JButton();
-                if (i < 4 && j < 4) {
+                __gameBoard[i][j].setOpaque(true); // ????????????? is needed
+                if (cellValue[col][j].equals("P")) {
                     __gameBoard[i][j].setText("P");
-                    ColorScheme.setColor(__gameBoard[i][j], ColorScheme.BLACK, ColorScheme.RED);
+                    ColorScheme.setColor(__gameBoard[i][j],  ColorScheme.BLACK, ColorScheme.RED);
                     __gameBoard[i][j].addActionListener(this);
-                }
-                else {
-                    ColorScheme.setColor(__gameBoard[i][j], ColorScheme.GRAY);
+                } else {
+                    // set non-clicable buttons (Walls)
+                    __gameBoard[i][j].setBackground(ColorScheme.GRAY.get());
                     __gameBoard[i][j].setEnabled(false);
                 }
                 __boardPanel.add(__gameBoard[i][j]);
             }
         }
-        __gameBoard[0][0].setText(" ");
+        __gameBoard[4][3].setText(" "); // center empty cell   
+    }
+
+    private void setEnglishBoard () {
+        __boardPanel.setLayout(new GridLayout(7, 7)); 
+        __gameBoard = new JButton[7][7];
+
+        final String cellValue[][] = {
+                { "", "", "P", "P", "P", "", ""},
+                {"P", "P", "P", "P", "P", "P", "P"}
+        };
+
+        for (int i = 0; i < __gameBoard.length; ++i) {
+            int col = (2 <= i && i <= 4) ? 1 : 0;
+
+            for (int j = 0; j < __gameBoard[i].length; ++j) {
+                __gameBoard[i][j] = new JButton();
+                __gameBoard[i][j].setOpaque(true); // ????????????? is needed
+                if (cellValue[col][j].equals("P")) {
+                    __gameBoard[i][j].setText("P");
+                    ColorScheme.setColor(__gameBoard[i][j],  ColorScheme.BLACK, ColorScheme.RED);
+                    __gameBoard[i][j].addActionListener(this);
+                } else {
+                    // set non-clicable buttons (Walls)
+                    __gameBoard[i][j].setBackground(ColorScheme.GRAY.get());
+                    __gameBoard[i][j].setEnabled(false);
+                }
+                __boardPanel.add(__gameBoard[i][j]);
+            }
+        }
+        __gameBoard[3][3].setText(" "); // center empty cell   
+    }
+    
+    private void setDiamondBoard () {
+        __boardPanel.setLayout(new GridLayout(9, 9));
+        initBoard(9, 9, "P");
+
+        for (int i = 0, n = 4; i < 4; ++i, --n)
+            for (int j = 0; j < n; ++j)
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 0, n = 5; i < 4; ++i, ++n)
+            for (int j = n; j < 9; ++j)
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 5, n = 1; i < 9; ++i, ++n)
+            for (int j = 0; j < n; ++j)
+                setEmptyButton(__gameBoard[i][j]);
+
+        for (int i = 5, n = 8; i < 9; ++i, --n)
+            for (int j = n; j < 9; ++j)
+                setEmptyButton(__gameBoard[i][j]);
+        
+        __gameBoard[4][4].setText(" ");
+    }
+
+    private void setTriangleBoard () {
+        //! NOT IMPLEMENTED YET
+        System.out.println("NOT IMPLEMENTED YET");
+    } 
+    
+    private void setEmptyButton (JButton btn) {
+        btn.setBackground(ColorScheme.GRAY.get());
+        btn.setText("");
+        btn.setEnabled(false);
+    }
+
+    private void initBoard (int row, int col, String val) {
+        __gameBoard = new JButton[row][col];
+        for (int i = 0; i < row; ++i)
+            for (int j = 0; j < col; ++j) {
+                __gameBoard[i][j] = new JButton(val);
+                __gameBoard[i][j].addActionListener(this);
+                ColorScheme.setColor(__gameBoard[i][j], ColorScheme.BLACK, ColorScheme.RED);
+                __boardPanel.add(__gameBoard[i][j]);
+            }
     }
 
     public boolean isGameOver() {
@@ -210,11 +316,17 @@ public class GamePanel extends JPanel implements ActionListener {
         if (selectedBtn.getText().equals("P")) {
                 __curMov.setStart(selectedBtn);
                 
-                selectedBtn.setForeground(ColorScheme.GREEN.get()); // set hover effect on selected button
                 __nextPossibleBtn = __curMov.nextPossibleMov();
-                if (__nextPossibleBtn != null)
+                if (__nextPossibleBtn == null)
+                    __curMov.setStart(null);
+                else {
+                    // set hover effect on selected button                    
+                    selectedBtn.setForeground(ColorScheme.GREEN.get()); 
+                    
+                    // show possible movements by hovering buttons
                     for (var btn : __nextPossibleBtn)
-                        btn.setBackground(ColorScheme.RED.get()); // set hover effect on selected button
+                        btn.setBackground(ColorScheme.RED.get()); 
+                }
             }
         }
         // if start button was selected, current selected button should be end button

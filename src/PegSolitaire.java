@@ -29,6 +29,8 @@ public class PegSolitaire extends JFrame implements ActionListener {
     private JRadioButton[] __boardTypeBtn;  // six different board
     private JButton __backToMainMenuBtn;
     private JButton __createGameBtn;
+    private GamePanel.BoardType __boardType;
+    private GamePanel.GameMode __gameType;
 
     private JPanel __displayPanel; // the dislaying panel on top of JFrame
 
@@ -42,7 +44,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         // set game and menu panels
         setMainMenuPanel();
         setGameSettingsPanel();
-        setGamePanel();
+        // setGamePanel();
 
         // display main menu panel as start of the interface
         setDisplayPanel(__mainMenuPanel);
@@ -50,7 +52,6 @@ public class PegSolitaire extends JFrame implements ActionListener {
         
         setVisible(true);    
     }
-
 
     public void setMainMenuPanel () {
         // set null layout for menu panel
@@ -146,9 +147,12 @@ public class PegSolitaire extends JFrame implements ActionListener {
         JPanel commandPanel = new JPanel();
         ColorScheme.setColor(commandPanel, ColorScheme.BLACK);
 
+        // initially create button 
         __createGameBtn = new JButton();
         __createGameBtn.setText("Create");
         ColorScheme.setColor(__createGameBtn, ColorScheme.GRAY, ColorScheme.RED);
+        // create button not enable till board and game type selected 
+        __createGameBtn.setEnabled(false); 
         __createGameBtn.addActionListener(this);
 
         __backToMainMenuBtn = new JButton();
@@ -173,7 +177,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
         __homeBtn = new JButton();
         __homeBtn.addActionListener(this);
-        __gamePanel = new GamePanel(__homeBtn);
+        __gamePanel = new GamePanel(__homeBtn, __gameType, __boardType);
     }
 
     public void setDisplayPanel (JPanel panel) {
@@ -218,26 +222,47 @@ public class PegSolitaire extends JFrame implements ActionListener {
                     setDisplayPanel(__mainMenuPanel);
                 }
                 else if (e.getSource() == __createGameBtn) {
-                    //! create the game which properties specified
+                    // create the game which properties specified
+                    setGamePanel();
                     setDisplayPanel(__gamePanel);
                 }
             }
-
             // GAME SETTING BUTTONS (CREATE & BACK)
             else if (e.getSource() instanceof JRadioButton) {
+                boolean exit = false;
 
-                for (int i = 0; i < __gameTypeBtn.length; ++i)
+                // GAME TYPE BUTTONS
+                for (int i = 0; i < __gameTypeBtn.length && !exit; ++i)
                     if (e.getSource() == __gameTypeBtn[i]) {
+                        __gameType = __gameTypeBtn[i].getText().equals("User") ? GamePanel.GameMode.USER : GamePanel.GameMode.COMPUTER;
                         System.out.printf("selected mode: %s\n", __gameTypeBtn[i].getText());
-                        return;
                     }
 
-                for (int i = 0; i < __boardTypeBtn.length; ++i)
+                // BOARD TYPE BUTTONS
+                for (int i = 0; i < __boardTypeBtn.length && !exit; ++i)
                     if (e.getSource() == __boardTypeBtn[i]) {
+                        switch (__boardTypeBtn[i].getText()) {
+                            case "French":
+                                __boardType = GamePanel.BoardType.FRENCH; break;
+                            case "German":
+                                __boardType = GamePanel.BoardType.GERMAN; break;
+                            case "Asymetrical":
+                                __boardType = GamePanel.BoardType.ASYMETRICAL; break;
+                            case "English":
+                                __boardType = GamePanel.BoardType.ENGLISH; break;
+                            case "Diamond":
+                                __boardType = GamePanel.BoardType.DIAMOND; break;
+                            case "Triangular":
+                                __boardType = GamePanel.BoardType.TRIANGULAR; break;
+                        }
+                        exit = true;
                         System.out.printf("selected mode: %s\n", __boardTypeBtn[i].getText());
-                        return;
                     }
-                }            
+                    
+                // enable the create game button, since two selection made
+                if (__boardType != null && __gameType != null)
+                __createGameBtn.setEnabled(true);
+            }
         }
         // GAME EVENTS
         else if (__displayPanel == __gamePanel) {
