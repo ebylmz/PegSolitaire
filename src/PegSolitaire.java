@@ -5,12 +5,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
 
 // import java.awt.GridLayout;
 // import javax.swing.JPanel;
@@ -173,6 +176,20 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
         // create button not enable till board and game type selected 
         __createGameBtn = menuBtn("Create", this, ColorScheme.BLACK, ColorScheme.RED, false);
+        __createGameBtn.addActionListener(new ActionListener() {
+            int delay = 500; 
+            ActionListener taskPerformer = new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    // This code will be called once the timeout of 1/2 seconds has been passed
+                    if (__gameType != GamePanel.GameMode.COMPUTER ||  !__gamePanel.moveRandom())
+                        ((Timer)evt.getSource()).stop();
+                }
+            };
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Timer(delay, taskPerformer).start();
+            }
+        });
 
         __backToMainMenuBtn = menuBtn("Back", this, ColorScheme.BLACK, ColorScheme.RED, true);
 
@@ -209,8 +226,6 @@ public class PegSolitaire extends JFrame implements ActionListener {
             // new game button
             if (e.getSource() == __menuBtn[0]) {
                 if (__gamePanel != null) {
-                    // ask if user wants to save the game
-                    //! NOT IMPLEMENTED YET
                     remove(__gamePanel); 
                     setGamePanel(); // set new Game Panel
                 }
@@ -218,8 +233,12 @@ public class PegSolitaire extends JFrame implements ActionListener {
                 setDisplayPanel(__gameSettingsPanel);
             }
             // continue button
-            else if (e.getSource() == __menuBtn[1])
+            else if (e.getSource() == __menuBtn[1]) {
+                //! NOT IMPLEMENTED YET
+                // load the game
+                // show previos games (they are in seperate file)
                 setDisplayPanel(__gamePanel);
+            }
             // exit button
             else if (e.getSource() == __menuBtn[2]) 
                 System.exit(1);
@@ -272,14 +291,21 @@ public class PegSolitaire extends JFrame implements ActionListener {
                     }
                     
                 // if two selection made, enable the button which creates game  
-                if (__boardType != null && __gameType != null)
-                __createGameBtn.setEnabled(true);
+                if (__boardType != null && __gameType != null) 
+                    __createGameBtn.setEnabled(true);
             }
         }
         // GAME EVENTS
         else if (__displayPanel == __gamePanel) {
-            if (e.getSource() == __homeBtn)
+            if (e.getSource() == __homeBtn) {
+                // ask if user wants to save the game
+                int select = JOptionPane.showConfirmDialog(this, "Do you want to save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (select == 0) { // yes(0), no(1), cancel(2)
+                    String filename = JOptionPane.showInputDialog(this, "Enter your username", "Save Progress", JOptionPane.INFORMATION_MESSAGE);
+                    __gamePanel.save(filename);
+                }
                 setDisplayPanel(__mainMenuPanel);
+            }
         }
 	}
 

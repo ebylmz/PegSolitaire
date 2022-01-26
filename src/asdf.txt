@@ -1,0 +1,10 @@
+USER 6
+      P . P       
+      P . P       
+      P P P       
+P P P P P P P P P 
+P P P . . P . P P 
+P P P P P P P P P 
+      P . P       
+      P . P       
+      P P P       

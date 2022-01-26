@@ -21,7 +21,7 @@ public enum ColorScheme {
                 c = new Color(0x129468);
                 break;
             case WHITE:
-                c = new Color(0xFFFFF);
+                c = new Color(0xFFFFFF);
                 break;
             case BLUE:
                 c = new Color(0x0000FF);
