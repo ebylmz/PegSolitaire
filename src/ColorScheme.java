@@ -4,7 +4,7 @@ import java.awt.Color;
 public enum ColorScheme {
     BLACK, BLUE, RED, GRAY, GREEN, WHITE; 
 
-    public Color get () {
+    public Color getColor () {
         // this refers to one of the objects BLACK, RED, GRAY...
         Color c = null;
         switch (this) {
@@ -31,11 +31,11 @@ public enum ColorScheme {
     }
 
     public static void setColor (Component comp, ColorScheme bg, ColorScheme fg) {
-        comp.setBackground(bg.get());
-        comp.setForeground(fg.get());
+        comp.setBackground(bg.getColor());
+        comp.setForeground(fg.getColor());
     }
 
     public static void setColor (Component comp, ColorScheme bg) {
-        comp.setBackground(bg.get());
+        comp.setBackground(bg.getColor());
     }
 }

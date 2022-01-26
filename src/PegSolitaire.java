@@ -15,7 +15,6 @@ import javax.swing.SwingUtilities;
 // import java.awt.GridLayout;
 // import javax.swing.JPanel;
 
-
 public class PegSolitaire extends JFrame implements ActionListener {
     private GamePanel __gamePanel;
     private JButton __homeBtn;
@@ -39,7 +38,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setIconImage(new ImageIcon("../img/logo.png").getImage());
         setLayout(new BorderLayout());
-        setSize(600, 650);
+        setSize(600, 700);
         
         // set game and menu panels
         setMainMenuPanel();
@@ -48,7 +47,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
         // display main menu panel as start of the interface
         setDisplayPanel(__mainMenuPanel);
-        // getContentPane().setBackground(ColorScheme.BLACK.get()); //! NOT NEEDED I THINK
+        // getContentPane().setBackground(ColorScheme.BLACK.getColor()); //! NOT NEEDED I THINK
         
         setVisible(true);    
     }
@@ -56,7 +55,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
     public void setMainMenuPanel () {
         // set null layout for menu panel
         __mainMenuPanel = new JPanel(null); 
-        __mainMenuPanel.setBackground(ColorScheme.BLACK.get());
+        __mainMenuPanel.setBackground(ColorScheme.BLACK.getColor());
         
         // set common button properties
         __menuBtn = new JButton[3];
@@ -66,12 +65,9 @@ public class PegSolitaire extends JFrame implements ActionListener {
         int verticalDistance = 100;
 
         for (int i = 0; i < __menuBtn.length; ++i, y += verticalDistance) {
-            __menuBtn[i] = new JButton();
+            __menuBtn[i] = menuBtn("", this, ColorScheme.GRAY, ColorScheme.RED, true);
             __menuBtn[i].setSize(150, 50);
             __menuBtn[i].setLocation(x, y);
-            __menuBtn[i].setBackground(ColorScheme.GRAY.get());
-            __menuBtn[i].setForeground(ColorScheme.RED.get());            
-            __menuBtn[i].addActionListener(this);
             __mainMenuPanel.add(__menuBtn[i]);
         }
 
@@ -83,7 +79,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
 
         // set a welcome message
         __welcomeLabel = new JLabel();
-        __welcomeLabel.setForeground(ColorScheme.RED.get());
+        __welcomeLabel.setForeground(ColorScheme.RED.getColor());
         
         __welcomeLabel.setText(
             "<html><p>" +
@@ -104,71 +100,86 @@ public class PegSolitaire extends JFrame implements ActionListener {
     } 
 
     public void setGameSettingsPanel () {
+        JPanel gameTypePanel = setGameTypePanel();
+        JPanel boardTypePanel = setBoardTypePanel();
+        JPanel commandPanel = setSettingsCommandPanel();
         
-        // set the game mode buttons (computer or user)
+        // add two panel to the top Game Settings panel
+        __gameSettingsPanel = new JPanel(new BorderLayout());
+        ColorScheme.setColor(__gameSettingsPanel, ColorScheme.GRAY);
+        __gameSettingsPanel.add(gameTypePanel, BorderLayout.NORTH);
+        __gameSettingsPanel.add(boardTypePanel, BorderLayout.CENTER);
+        __gameSettingsPanel.add(commandPanel, BorderLayout.SOUTH);
+    }
+
+    public JPanel setGameTypePanel () {
         JPanel gameSetPanel = new JPanel(new GridLayout(6, 2));
-        ColorScheme.setColor(gameSetPanel, ColorScheme.BLACK);
+        ColorScheme.setColor(gameSetPanel, ColorScheme.GRAY);
 
         __gameTypeBtn = new JRadioButton[2];   
         ButtonGroup playGroup = new ButtonGroup();
         for (int i = 0; i < __gameTypeBtn.length; ++i) {
             __gameTypeBtn[i] = new JRadioButton(); 
             __gameTypeBtn[i].addActionListener(this);
-            ColorScheme.setColor(__gameTypeBtn[i], ColorScheme.BLACK, ColorScheme.RED);
+            ColorScheme.setColor(__gameTypeBtn[i], ColorScheme.GRAY, ColorScheme.RED);
             // add related buttons to the same group
             playGroup.add(__gameTypeBtn[i]);
             gameSetPanel.add(__gameTypeBtn[i]);
         }        
 
         __gameTypeBtn[0].setText("Computer");
-        __gameTypeBtn[1].setText("User");
+        __gameTypeBtn[1].setText("User");    
+        return gameSetPanel;
+    } 
 
+    public JPanel setBoardTypePanel () {
         // set the board type buttons (six different board)
+        JPanel boardTypePanel = new JPanel(new GridLayout(2, 3));
+        boardTypePanel.setBackground(ColorScheme.GRAY.getColor());
         __boardTypeBtn = new JRadioButton[6];  // 
         ButtonGroup boardGroup = new ButtonGroup();
         for (int i = 0; i < __boardTypeBtn.length; ++i) {
             __boardTypeBtn[i] = new JRadioButton();
+            // set the text at the bottom center of the button
+            __boardTypeBtn[i].setHorizontalTextPosition(JButton.CENTER);
+            __boardTypeBtn[i].setVerticalTextPosition(JButton.BOTTOM);
+            ColorScheme.setColor(__boardTypeBtn[i], ColorScheme.GRAY, ColorScheme.BLACK);
             __boardTypeBtn[i].addActionListener(this);
-            ColorScheme.setColor(__boardTypeBtn[i], ColorScheme.BLACK, ColorScheme.RED);
-            // add related buttons to the same group
+
+            // add buttons to the same group to permit only one selection
             boardGroup.add(__boardTypeBtn[i]);
-            gameSetPanel.add(__boardTypeBtn[i]);
+            boardTypePanel.add(__boardTypeBtn[i]);
         }        
 
         __boardTypeBtn[0].setText("French");
+        __boardTypeBtn[0].setIcon(new ImageIcon("../img/b1.png"));
         __boardTypeBtn[1].setText("German");
+        __boardTypeBtn[1].setIcon(new ImageIcon("../img/b1.png"));
         __boardTypeBtn[2].setText("Asymetrical");
+        __boardTypeBtn[2].setIcon(new ImageIcon("../img/b1.png"));
         __boardTypeBtn[3].setText("English");
+        __boardTypeBtn[3].setIcon(new ImageIcon("../img/b1.png"));
         __boardTypeBtn[4].setText("Diamond");
+        __boardTypeBtn[4].setIcon(new ImageIcon("../img/b1.png"));
         __boardTypeBtn[5].setText("Triangular");
+        __boardTypeBtn[5].setIcon(new ImageIcon("../img/b1.png"));
+        return boardTypePanel;
+    }
 
-        
+    public JPanel setSettingsCommandPanel () {
         // set start and back button
         JPanel commandPanel = new JPanel();
-        ColorScheme.setColor(commandPanel, ColorScheme.BLACK);
+        ColorScheme.setColor(commandPanel, ColorScheme.GRAY);
 
-        // initially create button 
-        __createGameBtn = new JButton();
-        __createGameBtn.setText("Create");
-        ColorScheme.setColor(__createGameBtn, ColorScheme.GRAY, ColorScheme.RED);
         // create button not enable till board and game type selected 
-        __createGameBtn.setEnabled(false); 
-        __createGameBtn.addActionListener(this);
+        __createGameBtn = menuBtn("Create", this, ColorScheme.BLACK, ColorScheme.RED, false);
 
-        __backToMainMenuBtn = new JButton();
-        __backToMainMenuBtn.setText("Back");
-        ColorScheme.setColor(__backToMainMenuBtn, ColorScheme.GRAY, ColorScheme.RED);
-        __backToMainMenuBtn.addActionListener(this);
-
+        __backToMainMenuBtn = menuBtn("Back", this, ColorScheme.BLACK, ColorScheme.RED, true);
 
         commandPanel.add(__createGameBtn);
-        commandPanel.add(__backToMainMenuBtn);
-        
-        // add two panel to the top panel
-        __gameSettingsPanel = new JPanel(new BorderLayout());
-        ColorScheme.setColor(__gameSettingsPanel, ColorScheme.BLACK);
-        __gameSettingsPanel.add(gameSetPanel, BorderLayout.CENTER);
-        __gameSettingsPanel.add(commandPanel, BorderLayout.SOUTH);
+        commandPanel.add(__backToMainMenuBtn);    
+
+        return commandPanel;
     }
 
     public void setGamePanel () {
@@ -229,17 +240,18 @@ public class PegSolitaire extends JFrame implements ActionListener {
             }
             // GAME SETTING BUTTONS (CREATE & BACK)
             else if (e.getSource() instanceof JRadioButton) {
-                boolean exit = false;
+                boolean selected = false;
 
                 // GAME TYPE BUTTONS
-                for (int i = 0; i < __gameTypeBtn.length && !exit; ++i)
+                for (int i = 0; i < __gameTypeBtn.length && !selected; ++i)
                     if (e.getSource() == __gameTypeBtn[i]) {
-                        __gameType = __gameTypeBtn[i].getText().equals("User") ? GamePanel.GameMode.USER : GamePanel.GameMode.COMPUTER;
+                        __gameType = __gameTypeBtn[i].getText().equals("User") ? 
+                            GamePanel.GameMode.USER : GamePanel.GameMode.COMPUTER;
                         System.out.printf("selected mode: %s\n", __gameTypeBtn[i].getText());
                     }
-
+                
                 // BOARD TYPE BUTTONS
-                for (int i = 0; i < __boardTypeBtn.length && !exit; ++i)
+                for (int i = 0; i < __boardTypeBtn.length && !selected; ++i)
                     if (e.getSource() == __boardTypeBtn[i]) {
                         switch (__boardTypeBtn[i].getText()) {
                             case "French":
@@ -255,11 +267,11 @@ public class PegSolitaire extends JFrame implements ActionListener {
                             case "Triangular":
                                 __boardType = GamePanel.BoardType.TRIANGULAR; break;
                         }
-                        exit = true;
+                        selected = true;
                         System.out.printf("selected mode: %s\n", __boardTypeBtn[i].getText());
                     }
                     
-                // enable the create game button, since two selection made
+                // if two selection made, enable the button which creates game  
                 if (__boardType != null && __gameType != null)
                 __createGameBtn.setEnabled(true);
             }
@@ -270,4 +282,20 @@ public class PegSolitaire extends JFrame implements ActionListener {
                 setDisplayPanel(__mainMenuPanel);
         }
 	}
+
+    private JButton menuBtn (String text, ActionListener listener, ColorScheme bg, ColorScheme fg, boolean isEnable) {
+        JButton btn = new JButton(text);
+        btn.addActionListener(listener);
+        ColorScheme.setColor(btn, bg, fg);
+        btn.setEnabled(isEnable);
+        return btn;
+    }
+
+    private JButton menuBtn (ImageIcon img, ActionListener listener, ColorScheme bg, ColorScheme fg, boolean isEnable) {
+        JButton btn = new JButton(img);
+        btn.addActionListener(listener);
+        ColorScheme.setColor(btn, bg, fg);
+        btn.setEnabled(isEnable);
+        return btn;
+    }
 }
