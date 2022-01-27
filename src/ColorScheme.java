@@ -1,7 +1,6 @@
+
 import java.awt.Component;
-
 import javax.swing.ImageIcon;
-
 import java.awt.Color;
 
 public enum ColorScheme {

@@ -1,12 +1,11 @@
 JC = javac
 R = java
-Packet = 
-OUT_DIR = 
-JFlags =  
+Packet = pegsolitaire
+JFlags = 
 
 muo:
-	$(JC) $(JFlags) -d $(OUT_DIR) src/PegSolitaire.java src/TestPegSolitaire.java
-#$(R) $(OUT_DIR)/TestPegSolitaire
+	$(JC) $(JFlags) $(Packet)/*.java
+	$(R) $(Packet).TestPegSolitaire
 
 javadoc:
 	javadoc -d doc/ $(Packet)/*.java
@@ -14,4 +13,4 @@ javadoc:
 rebuild: clean muo
 
 clean:
-	rm -rf $(OUT_DIR)/*.class doc/ 
+	rm -rf $(Packet)/*.class doc/ 

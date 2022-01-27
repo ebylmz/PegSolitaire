@@ -1,5 +1,3 @@
-// import javax.swing.JFrame;
-
 public class TestPegSolitaire {
     public static void main(String[] args) {
         new PegSolitaire();

@@ -1,3 +1,4 @@
+
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
 import java.awt.event.ActionListener;
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.awt.event.ActionEvent;
 import javax.swing.Timer;
 import javax.swing.border.Border;
+
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -110,9 +112,9 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public JButton[][] gameBoard() {return __gameBoard;}
 
-    public Stack<Movement> allMovements () {
-        return __allMov;
-    }
+    public Stack<Movement> allMovements () {return __allMov;}
+
+    public Movement curMovement () {return __curMov;}
 
     private void setTopControlPanel (final JButton homeButton) {
         Border emptyBorder = BorderFactory.createEmptyBorder();
@@ -434,9 +436,8 @@ public class GamePanel extends JPanel implements ActionListener {
         if (selectedBtn == __undoBtn) 
             undo();
         // ONE AUTO MOVEMENT EVENT
-        else if (selectedBtn == __nextMovBtn) {
+        else if (selectedBtn == __nextMovBtn)
             moveRandom();
-        }
         // SAVE EVENT
         else if (selectedBtn == __saveBtn) {
             // get the filename to save the current game progress
@@ -510,6 +511,8 @@ public class GamePanel extends JPanel implements ActionListener {
             __allMov.push(mov.clone());  
             if (!__undoBtn.isEnabled())
                 __undoBtn.setEnabled(true);
+            if (isGameOver())
+                __nextMovBtn.setEnabled(false);
             return true;
         } else
             return false;
@@ -539,6 +542,8 @@ public class GamePanel extends JPanel implements ActionListener {
             
             if (__allMov.size() == 0)
                 __undoBtn.setEnabled(false);
+            if (!__nextMovBtn.isEnabled())
+                __nextMovBtn.setEnabled(true);
             return true;
         }
         return false;

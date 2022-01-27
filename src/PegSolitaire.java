@@ -1,3 +1,4 @@
+
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Font;
@@ -42,7 +43,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setIconImage(new ImageIcon("../img/logo.png").getImage());
         setLayout(new BorderLayout());
-        setSize(600, 700);
+        setSize(650, 750);
         
         // set game and menu panels
         setMainMenuPanel();
@@ -108,7 +109,6 @@ public class PegSolitaire extends JFrame implements ActionListener {
         JPanel boardTypePanel = setBoardTypePanel();
         JPanel commandPanel = setSettingsCommandPanel();
         
-
         JLabel gameModeText = new JLabel("Game Mode");
         ColorScheme.setColor(gameModeText, ColorScheme.BLACK, ColorScheme.RED);
         gameModeText.setFont(new Font("MV Boli", Font.PLAIN, 30));
@@ -207,26 +207,30 @@ public class PegSolitaire extends JFrame implements ActionListener {
         __createGameBtn.setFont(menuFont);
 
         __createGameBtn.addActionListener(new ActionListener() {
-            int delay = 1000; 
+            int delay = 100; 
             ActionListener taskPerformer = new ActionListener() {
                 public void actionPerformed(ActionEvent evt) {
                     // This code will be called once the timeout of 1/2 seconds has been passed
                     if (__gameType == GamePanel.GameMode.COMPUTER) {
-                        int numOfMov = __gamePanel.numOfMov(); 
-                        if (numOfMov > 0)
-                            __gamePanel.allMovements().elementAt(numOfMov - 1).
-                                end().setBackground(ColorScheme.BLACK.getColor());
-
-                        // show the movement pattern if movement can succesfuly made
-                        if (__gamePanel.moveRandom())  {
-                            GamePanel.Movement lastMov = __gamePanel.allMovements().peek();
-                            lastMov.end().setBackground(ColorScheme.WHITE.getColor());
+                        if (__gamePanel.curMovement().start() == null) {
+                            // if random movement cannot made that means game is over
+                            if (__gamePanel.curMovement().setRandomMovement()) {
+                                __gamePanel.curMovement().start().setIcon(new ImageIcon("../img/selectedCell.png"));
+                                __gamePanel.curMovement().end().setIcon(new ImageIcon("../img/possibleCell.png"));
+                            }
+                            else {
+                                // display game score
+                                JOptionPane.showMessageDialog(__gamePanel, String.format(
+                                    "Number of Movement: %d\n" + 
+                                    "   Remaining Peg: %d", 
+                                    __gamePanel.numOfMov(), __gamePanel.numOfPeg()
+                                ), "Game is Over", JOptionPane.INFORMATION_MESSAGE);     
+                                
+                                ((Timer)evt.getSource()).stop();
+                            }
                         }
-                        else {
-                            __gamePanel.allMovements().elementAt(numOfMov - 1).
-                                end().setBackground(ColorScheme.BLACK.getColor());
-                            ((Timer)evt.getSource()).stop();
-                        }
+                        else if (__gamePanel.move(__gamePanel.curMovement()))
+                            __gamePanel.curMovement().setStart(null);
                     } 
                 }
             };
@@ -359,11 +363,13 @@ public class PegSolitaire extends JFrame implements ActionListener {
         else if (__displayPanel == __gamePanel) {
             if (e.getSource() == __homeBtn) {
                 // ask if user wants to save the game
+                /*
                 int select = JOptionPane.showConfirmDialog(this, "Save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (select == 0) { // yes(0), no(1), cancel(2)
                     String filename = JOptionPane.showInputDialog(this, "Enter your username", "Save Progress", JOptionPane.INFORMATION_MESSAGE);
                     __gamePanel.save(filename);
                 }
+                */
                 setDisplayPanel(__mainMenuPanel);
             }
         }
