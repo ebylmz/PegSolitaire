@@ -1,16 +1,21 @@
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.TimerTask;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.awt.event.ActionEvent;
 import javax.swing.Timer;
+import javax.swing.border.Border;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -27,6 +32,10 @@ public class GamePanel extends JPanel implements ActionListener {
     // private JPanel __statusPanel;
     private JPanel __boardPanel;
     private JButton __gameBoard[][];
+    final private ImageIcon __pegIcon = new ImageIcon("../img/pegCell.png");
+    final private ImageIcon __emptyIcon = new ImageIcon("../img/emptyCell.png");
+    final private ImageIcon __selectedCell = new ImageIcon("../img/selectedCell.png");
+    final private ImageIcon __possibleCell = new ImageIcon("../img/possibleCell.png");
 
     private JPanel __topControlPanel;
     private JButton __undoBtn;
@@ -34,12 +43,12 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private JPanel __bottomControlPanel;
     private JButton __saveBtn;
-    private JButton __questionBtn;
+    private JButton __nextMovBtn;
     
     private GameMode __gameMode;
     private Movement __curMov; // keeps the current movement (necassary for undo movement)
+    private Stack<Movement> __allMov;
     private Vector<JButton> __nextPossibleBtn;
-    private Stack<Movement> __movements;
     private int __numOfMov;
     private int __numOfPeg;
 
@@ -47,7 +56,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public GamePanel (JButton homeButton, GameMode gameMode, BoardType boardType) {
         setLayout(new BorderLayout());
         // getContentPane().setBackground(ColorScheme.BLACK.getColor()); //
-
+    
         // initialize the game board selected by user
         setGameBoard(boardType);
         setTopControlPanel(homeButton);
@@ -86,6 +95,8 @@ public class GamePanel extends JPanel implements ActionListener {
         return (double) numOfPeg() / 100.0;
     }
 
+    public int numOfMov () {return __numOfMov;}
+
     public int numOfPeg () {
         int n = 0;
         for (int i = 0; i < __gameBoard.length; ++i)
@@ -95,10 +106,19 @@ public class GamePanel extends JPanel implements ActionListener {
         return n;
     }
 
+    public Stack<Movement> allMovements () {
+        return __allMov;
+    }
+
     private void setTopControlPanel (final JButton homeButton) {
+        Border emptyBorder = BorderFactory.createEmptyBorder();
+        
         // add undo button
         __undoBtn = new JButton();
         __undoBtn.setBackground(ColorScheme.BLACK.getColor());
+        //set border to empty
+        __undoBtn.setBorder(emptyBorder);
+        
         // __undoBtn.setHorizontalTextPosition(JButton.CENTER);
         // __undoBtn.setVerticalTextPosition(JButton.BOTTOM);
         // __undoBtn.setPreferredSize(new Dimension(50, 50));
@@ -111,6 +131,7 @@ public class GamePanel extends JPanel implements ActionListener {
         __homeBtn = homeButton; 
         __homeBtn.setBackground(ColorScheme.BLACK.getColor());
         __homeBtn.setIcon(new ImageIcon("../img/home.png"));
+        __homeBtn.setBorder(emptyBorder);
         
         // set top control panel which keeps undo and home buttons 
         __topControlPanel = new JPanel(new BorderLayout());
@@ -122,20 +143,24 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void setBottomControlPanel () {
-        __questionBtn = new JButton();
-        __questionBtn.setIcon(new ImageIcon("../img/question.png"));
-        __questionBtn.setBackground(ColorScheme.BLACK.getColor());
-        __questionBtn.addActionListener(this);
+        Border emptyBorder = BorderFactory.createEmptyBorder();
+
+        __nextMovBtn = new JButton();
+        __nextMovBtn.setIcon(new ImageIcon("../img/playAuto.png"));
+        __nextMovBtn.setBackground(ColorScheme.BLACK.getColor());
+        __nextMovBtn.addActionListener(this);
+        __nextMovBtn.setBorder(emptyBorder);
 
         __saveBtn = new JButton();
         __saveBtn.setIcon(new ImageIcon("../img/save.png"));
         __saveBtn.setBackground(ColorScheme.BLACK.getColor());
         __saveBtn.addActionListener(this);
+        __saveBtn.setBorder(emptyBorder);
         
         // set bottom control panel which keeps undo and home buttons 
         __bottomControlPanel = new JPanel(new BorderLayout());
         __bottomControlPanel.setBackground(ColorScheme.BLACK.getColor());
-        __bottomControlPanel.add(__questionBtn, BorderLayout.WEST);
+        __bottomControlPanel.add(__nextMovBtn, BorderLayout.WEST);
         __bottomControlPanel.add(__saveBtn, BorderLayout.EAST);
         // add control panel to the bottom of the super panel
         add(__bottomControlPanel, BorderLayout.SOUTH);
@@ -148,7 +173,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // set Board Panel (keeps each buttons to represent cells of PegSolitaire)
         __boardPanel = new JPanel();
         __boardPanel.setBackground(ColorScheme.BLACK.getColor());
-
+        __boardPanel.setBorder(null);
         switch (t) {
             case FRENCH: 
                 setFrenchBoard();break;
@@ -170,7 +195,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // setGameStatus(); //!! NOT SURE
         // reset/init movement for new board
         __curMov = new Movement(__gameBoard);
-        __movements = new Stack<Movement>();
+        __allMov = new Stack<Movement>();
     }
 
     private void setGermanBoard() {
@@ -190,7 +215,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     cellButton(__boardPanel, CellValue.PEG) : cellButton(__boardPanel, CellValue.WALL);    
         }
         __gameBoard[4][4].setActionCommand(".");
-        __gameBoard[4][4].setIcon(null);
+        __gameBoard[4][4].setIcon(__emptyIcon);
     }
 
     private void setFrenchBoard () {
@@ -224,7 +249,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
 
         __gameBoard[2][3].setActionCommand(".");
-        __gameBoard[2][3].setIcon(null);
+        __gameBoard[2][3].setIcon(__emptyIcon);
     }
 
     private void setAsymmetricalBoard () {
@@ -243,7 +268,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     cellValue[col][j].equals("P") ? CellValue.PEG : CellValue.WALL);  
         }
         __gameBoard[4][3].setActionCommand(".");
-        __gameBoard[4][3].setIcon(null);
+        __gameBoard[4][3].setIcon(__emptyIcon);
     }
 
     private void setEnglishBoard () {
@@ -262,7 +287,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     cellValue[col][j].equals("P") ? CellValue.PEG : CellValue.WALL);  
         }
         __gameBoard[3][3].setActionCommand(".");
-        __gameBoard[3][3].setIcon(null);
+        __gameBoard[3][3].setIcon(__emptyIcon);
     }
     
     private void setDiamondBoard () {
@@ -294,7 +319,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 __gameBoard[i][j] = cellButton(__boardPanel, CellValue.WALL);
         }
         __gameBoard[4][4].setActionCommand(".");
-        __gameBoard[4][4].setIcon(null);
+        __gameBoard[4][4].setIcon(__emptyIcon);
     }
 
     private void setTriangleBoard () {
@@ -322,24 +347,37 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private JButton createEmptyButton () {
         JButton btn = new JButton();
+        //create an empty border
+        Border emptyBorder = BorderFactory.createEmptyBorder();
+        //set border to empty
+        btn.setBorder(emptyBorder);
         ColorScheme.setColor(btn,  ColorScheme.BLACK, ColorScheme.RED);
         btn.setActionCommand(".");
+        btn.setIcon(__emptyIcon);
         btn.addActionListener(this);
         return btn;
     }
 
     private JButton createPegButton () {
         JButton btn = new JButton();
+        //create an empty border
+        Border emptyBorder = BorderFactory.createEmptyBorder();
+        //set border to empty
+        btn.setBorder(emptyBorder);
         ColorScheme.setColor(btn,  ColorScheme.BLACK, ColorScheme.RED);
         btn.setActionCommand("P");
-        btn.setIcon(new ImageIcon("../img/peg1.png"));
+        btn.setIcon(__pegIcon);
         btn.addActionListener(this);
         return btn;
     }
     
     private JButton createWallButton () {
         JButton btn = new JButton();
-        ColorScheme.setColor(btn,  ColorScheme.GRAY, ColorScheme.RED);
+        //create an empty border
+        Border emptyBorder = BorderFactory.createEmptyBorder();
+        //set border to empty
+        btn.setBorder(emptyBorder);
+        ColorScheme.setColor(btn,  ColorScheme.BLACK, ColorScheme.RED);
         btn.setActionCommand(" ");
         btn.setEnabled(false); // set wall buttons as non-clickable
         btn.addActionListener(this);
@@ -381,16 +419,16 @@ public class GamePanel extends JPanel implements ActionListener {
         // UNDO EVENT
         if (selectedBtn == __undoBtn) 
             undo();
-        // QUESTION EVENT
-        else if (selectedBtn == __questionBtn) {
-            //! NOT IMPLEMENTED YET
-            JOptionPane.showMessageDialog(this, "Hello, I'm your assistant. You can ask me anything");
+        // ONE AUTO MOVEMENT EVENT
+        else if (selectedBtn == __nextMovBtn) {
+            moveRandom();
         }
         // SAVE EVENT
         else if (selectedBtn == __saveBtn) {
             // get the filename to save the current game progress
             String filename = JOptionPane.showInputDialog(this, "Enter your user name");
-            save(filename);
+            if (filename != null)   // user enters cancel button
+                save(filename);
         }
         // REST OF THEM GAME BOARD BUTTON EVENTS
         else if (__curMov.start() == null) {
@@ -405,11 +443,11 @@ public class GamePanel extends JPanel implements ActionListener {
                 else {
                     // set hover effect on selected button                    
                     // selectedBtn.setBackground(ColorScheme.WHITE.getColor()); 
-                    selectedBtn.setIcon(new ImageIcon("../img/peg2.png"));
+                    selectedBtn.setIcon(__selectedCell);
 
                     // show possible movements by hovering buttons
                     for (var btn : __nextPossibleBtn)
-                        btn.setBackground(ColorScheme.RED.getColor()); 
+                        btn.setIcon(__possibleCell);
                 }
             }
         }
@@ -430,40 +468,32 @@ public class GamePanel extends JPanel implements ActionListener {
                     ), "Game is Over", JOptionPane.INFORMATION_MESSAGE);    
             }
             else
-                __curMov.start().setIcon(new ImageIcon("../img/peg1.png"));
-
-            // else JOptionPane.showMessageDialog(null, "Illegal movement", "Error", JOptionPane.ERROR_MESSAGE);
-
-            // trub back the default colors of selected buttons
-            // __curMov.start().setBackground(ColorScheme.BLACK.getColor());
-            // __curMov.end().setBackground(ColorScheme.BLACK.getColor());
-            
-            // __curMov.start().setIcon(null);
-            // __curMov.end().setIcon(null);
+                __curMov.start().setIcon(__pegIcon);
 
             // set current Movement as null for next movement
             __curMov.setStart(null);
             __curMov.setEnd(null);
 
-            if (__nextPossibleBtn != null)
-                for (var btn : __nextPossibleBtn)
-                    btn.setBackground(ColorScheme.BLACK.getColor()); // set hover effect on selected button
+            // set possible buttons as their previos 
+            for (var btn : __nextPossibleBtn)
+                if (btn != selectedBtn)
+                    btn.setIcon(__emptyIcon);
         }
     }
 
     public boolean move (Movement mov) {
         if (mov.isValidMovement()) {
             mov.start().setActionCommand(".");
-            mov.start().setIcon(null);
+            mov.start().setIcon(__emptyIcon);
             mov.jump().setActionCommand(".");
-            mov.jump().setIcon(null);
+            mov.jump().setIcon(__emptyIcon);
             mov.end().setActionCommand("P");
-            mov.end().setIcon(new ImageIcon("../img/peg1.png"));
+            mov.end().setIcon(__pegIcon);
             
             ++__numOfMov;
             --__numOfPeg;
             // add the current movement to the movements stack (copy of it!)
-            __movements.push(mov.clone());  
+            __allMov.push(mov.clone());  
             if (!__undoBtn.isEnabled())
                 __undoBtn.setEnabled(true);
             return true;
@@ -472,46 +502,28 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public boolean moveRandom () {
-        Random rand = new Random();
-        // choose an random starting position
-        int row = rand.nextInt(__gameBoard.length);
-        int col = rand.nextInt(__gameBoard[row].length);
-
-        // start with selected position (row, col) and try each cell to make movement
-        for (int i = 0; i < __gameBoard.length; ++i) {
-            for (int j = 0; j < __gameBoard[i].length; ++j) {
-                // check movement
-                __curMov.setStart(__gameBoard[row][col]);
-                if (    
-                    __curMov.setMovement(__gameBoard[row][col], Movement.Direction.RIGHT) ||
-                    __curMov.setMovement(__gameBoard[row][col], Movement.Direction.LEFT) ||
-                    __curMov.setMovement(__gameBoard[row][col], Movement.Direction.UP) ||
-                    __curMov.setMovement(__gameBoard[row][col], Movement.Direction.DOWN)
-                ) {
-                    move(__curMov);
-                    return true;
-                }
-                // iterate coloumn
-                col = (col == __gameBoard[row].length - 1) ? 0 : col + 1;
-            }
-            // iterate row
-            row = (row == __gameBoard.length - 1) ? 0 : row + 1;
+        GamePanel.Movement mov = new Movement(__gameBoard); 
+        if (mov.setRandomMovement()) {
+            move(mov);
+            return true;
         }
         return false;
     }
 
     public boolean undo() {
-        // if (__curMov.start() != null && __curMov.jump() != null && __curMov.end() // != null) {
         // if there is a valid movement made before, apply reverse of it
         if (__undoBtn.isEnabled()) {
-            Movement lastMov = __movements.pop();
+            Movement lastMov = __allMov.pop();
             lastMov.start().setActionCommand("P");
+            lastMov.start().setIcon(__pegIcon);
             lastMov.jump().setActionCommand("P");
+            lastMov.jump().setIcon(__pegIcon);
             lastMov.end().setActionCommand(".");
+            lastMov.end().setIcon(__emptyIcon);
             --__numOfMov;
             ++__numOfPeg;
             
-            if (__movements.size() == 0)
+            if (__allMov.size() == 0)
                 __undoBtn.setEnabled(false);
             return true;
         }
@@ -520,9 +532,11 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void save (String filename) {
         try {
-            FileWriter writer = new FileWriter(filename + ".txt");        
+            FileWriter writer = new FileWriter("../userBoards/" + filename + ".txt");        
             
-            writer.write(String.format("%s %d\n", __gameMode, __numOfMov));
+            // each boards are rectangular (main boards are square, user defined ones must be rectangular)
+            writer.write(String.format("%s %d %d %d\n", 
+                __gameMode, __numOfMov, __gameBoard.length, __gameBoard[0].length));
             for (int i = 0; i < __gameBoard.length; ++i) {
                 for (int j = 0; j < __gameBoard[i].length; ++j) {
                     writer.write(__gameBoard[i][j].getActionCommand());
@@ -543,7 +557,34 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void load (String filename) {
-        //! NOT IMPLEMENTED YET
+        // scanner will close itself automaticly (required AutoCloseable interface)
+        try (Scanner reader = new Scanner(new File(filename));) {
+            // first line contains Game configurations
+            // GameMode(string), NumOfMov(int) BoardRow(int) BoardCol(int)
+            String str = reader.next();
+            int numOfMov = reader.nextInt();
+            int row = reader.nextInt();
+            int col = reader.nextInt();
+
+            GameMode gameMode;
+            if (str.equals(GameMode.USER))
+                gameMode = GameMode.USER;
+            else if (str.equals(GameMode.COMPUTER))
+                gameMode = GameMode.COMPUTER;
+            else
+                throw new IllegalArgumentException();
+
+            __gameBoard = new JButton[row][col];
+            //! create the board
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Something went wrong.");
+            e.printStackTrace();
+        }
+        catch (IllegalArgumentException e) {
+            System.out.println("Invalid board carachter detected");
+            //! so on ?
+        }
     }
 
     public static class Movement implements Cloneable {
@@ -685,6 +726,33 @@ public class GamePanel extends JPanel implements ActionListener {
                 System.err.printf("start JButton is invalid parameter for setting");
                 throw e;
             }            
+        }
+
+        public boolean setRandomMovement () {
+            Random rand = new Random();
+            // choose an random starting position
+            int row = rand.nextInt(__board.length);
+            int col = rand.nextInt(__board[row].length);
+    
+            // start with selected position (row, col) and try each cell to make movement
+            for (int i = 0; i < __board.length; ++i) {
+                for (int j = 0; j < __board[i].length; ++j) {
+                    // check movement
+                    setStart(__board[row][col]);
+                    if (    
+                        setMovement(__board[row][col], Movement.Direction.RIGHT) ||
+                        setMovement(__board[row][col], Movement.Direction.LEFT) ||
+                        setMovement(__board[row][col], Movement.Direction.UP) ||
+                        setMovement(__board[row][col], Movement.Direction.DOWN)
+                    ) 
+                        return true;
+                    // iterate coloumn
+                    col = (col == __board[row].length - 1) ? 0 : col + 1;
+                }
+                // iterate row
+                row = (row == __board.length - 1) ? 0 : row + 1;
+            }
+            return false;
         }
 
         private boolean setUpMovement(int row, int col) {

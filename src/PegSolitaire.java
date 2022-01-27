@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Font;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
@@ -13,7 +14,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-
 
 // import java.awt.GridLayout;
 // import javax.swing.JPanel;
@@ -68,7 +68,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         int verticalDistance = 100;
 
         for (int i = 0; i < __menuBtn.length; ++i, y += verticalDistance) {
-            __menuBtn[i] = menuBtn("", this, ColorScheme.GRAY, ColorScheme.RED, true);
+            __menuBtn[i] = menuBtn("", this, ColorScheme.BLUE, ColorScheme.RED, true);
             __menuBtn[i].setSize(150, 50);
             __menuBtn[i].setLocation(x, y);
             __mainMenuPanel.add(__menuBtn[i]);
@@ -107,38 +107,63 @@ public class PegSolitaire extends JFrame implements ActionListener {
         JPanel boardTypePanel = setBoardTypePanel();
         JPanel commandPanel = setSettingsCommandPanel();
         
+
+        JLabel gameModeText = new JLabel("Game Mode");
+        ColorScheme.setColor(gameModeText, ColorScheme.BLACK, ColorScheme.RED);
+        gameModeText.setFont(new Font("MV Boli", Font.PLAIN, 30));
+        gameModeText.setHorizontalAlignment(JLabel.CENTER);
+        
+        JLabel gameBoardText = new JLabel("Game Board");
+        ColorScheme.setColor(gameBoardText, ColorScheme.BLACK, ColorScheme.RED);
+        gameBoardText.setFont(new Font("MV Boli", Font.PLAIN, 30));
+        gameBoardText.setHorizontalAlignment(JLabel.CENTER);
+
         // add two panel to the top Game Settings panel
-        __gameSettingsPanel = new JPanel(new BorderLayout());
-        ColorScheme.setColor(__gameSettingsPanel, ColorScheme.GRAY);
-        __gameSettingsPanel.add(gameTypePanel, BorderLayout.NORTH);
-        __gameSettingsPanel.add(boardTypePanel, BorderLayout.CENTER);
-        __gameSettingsPanel.add(commandPanel, BorderLayout.SOUTH);
+        __gameSettingsPanel = new JPanel(new GridLayout(5, 1));
+        ColorScheme.setColor(__gameSettingsPanel, ColorScheme.BLACK);
+        __gameSettingsPanel.add(gameModeText);
+        __gameSettingsPanel.add(gameTypePanel);
+        __gameSettingsPanel.add(gameBoardText);
+        __gameSettingsPanel.add(boardTypePanel);
+        __gameSettingsPanel.add(commandPanel);
+
+
+        // __gameSettingsPanel.add(gameTypePanel, BorderLayout.NORTH);
+        // __gameSettingsPanel.add(boardTypePanel, BorderLayout.CENTER);
+        // __gameSettingsPanel.add(commandPanel, BorderLayout.SOUTH);
     }
 
     public JPanel setGameTypePanel () {
-        JPanel gameSetPanel = new JPanel(new GridLayout(6, 2));
-        ColorScheme.setColor(gameSetPanel, ColorScheme.GRAY);
+        JPanel gameSetPanel = new JPanel(); 
+        ColorScheme.setColor(gameSetPanel, ColorScheme.BLACK, ColorScheme.RED);
 
+        // JLabel text = new JLabel("Game Mode");
+        // ColorScheme.setColor(text, ColorScheme.BLACK, ColorScheme.RED);
+        // text.setFont(new Font("MV Boli", Font.PLAIN, 30));
+        // text.setHorizontalAlignment(JLabel.CENTER);
+        // gameSetPanel.add(text);
+        
         __gameTypeBtn = new JRadioButton[2];   
         ButtonGroup playGroup = new ButtonGroup();
         for (int i = 0; i < __gameTypeBtn.length; ++i) {
             __gameTypeBtn[i] = new JRadioButton(); 
             __gameTypeBtn[i].addActionListener(this);
-            ColorScheme.setColor(__gameTypeBtn[i], ColorScheme.GRAY, ColorScheme.RED);
+            ColorScheme.setColor(__gameTypeBtn[i], ColorScheme.BLACK, ColorScheme.RED);
             // add related buttons to the same group
             playGroup.add(__gameTypeBtn[i]);
             gameSetPanel.add(__gameTypeBtn[i]);
         }        
 
-        __gameTypeBtn[0].setText("Computer");
-        __gameTypeBtn[1].setText("User");    
+        __gameTypeBtn[0].setText("User");
+        __gameTypeBtn[1].setText("Computer");
+        
         return gameSetPanel;
     } 
 
     public JPanel setBoardTypePanel () {
         // set the board type buttons (six different board)
-        JPanel boardTypePanel = new JPanel(new GridLayout(2, 3));
-        boardTypePanel.setBackground(ColorScheme.GRAY.getColor());
+        JPanel boardTypePanel = new JPanel(/* new GridLayout(2, 3, 0, 50) */);
+        ColorScheme.setColor(boardTypePanel, ColorScheme.BLACK, ColorScheme.RED);
         __boardTypeBtn = new JRadioButton[6];  // 
         ButtonGroup boardGroup = new ButtonGroup();
         for (int i = 0; i < __boardTypeBtn.length; ++i) {
@@ -146,7 +171,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
             // set the text at the bottom center of the button
             __boardTypeBtn[i].setHorizontalTextPosition(JButton.CENTER);
             __boardTypeBtn[i].setVerticalTextPosition(JButton.BOTTOM);
-            ColorScheme.setColor(__boardTypeBtn[i], ColorScheme.GRAY, ColorScheme.BLACK);
+            ColorScheme.setColor(__boardTypeBtn[i], ColorScheme.BLACK, ColorScheme.RED);
             __boardTypeBtn[i].addActionListener(this);
 
             // add buttons to the same group to permit only one selection
@@ -172,17 +197,36 @@ public class PegSolitaire extends JFrame implements ActionListener {
     public JPanel setSettingsCommandPanel () {
         // set start and back button
         JPanel commandPanel = new JPanel();
-        ColorScheme.setColor(commandPanel, ColorScheme.GRAY);
+        ColorScheme.setColor(commandPanel, ColorScheme.BLACK);
+
+        Font menuFont = new Font("MV Boli", Font.PLAIN, 25);
 
         // create button not enable till board and game type selected 
         __createGameBtn = menuBtn("Create", this, ColorScheme.BLACK, ColorScheme.RED, false);
+        __createGameBtn.setFont(menuFont);
+
         __createGameBtn.addActionListener(new ActionListener() {
-            int delay = 500; 
+            int delay = 1000; 
             ActionListener taskPerformer = new ActionListener() {
                 public void actionPerformed(ActionEvent evt) {
                     // This code will be called once the timeout of 1/2 seconds has been passed
-                    if (__gameType != GamePanel.GameMode.COMPUTER ||  !__gamePanel.moveRandom())
-                        ((Timer)evt.getSource()).stop();
+                    if (__gameType == GamePanel.GameMode.COMPUTER) {
+                        int numOfMov = __gamePanel.numOfMov(); 
+                        if (numOfMov > 0)
+                            __gamePanel.allMovements().elementAt(numOfMov - 1).
+                                end().setBackground(ColorScheme.BLACK.getColor());
+
+                        // show the movement pattern if movement can succesfuly made
+                        if (__gamePanel.moveRandom())  {
+                            GamePanel.Movement lastMov = __gamePanel.allMovements().peek();
+                            lastMov.end().setBackground(ColorScheme.WHITE.getColor());
+                        }
+                        else {
+                            __gamePanel.allMovements().elementAt(numOfMov - 1).
+                                end().setBackground(ColorScheme.BLACK.getColor());
+                            ((Timer)evt.getSource()).stop();
+                        }
+                    } 
                 }
             };
             @Override
@@ -192,6 +236,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         });
 
         __backToMainMenuBtn = menuBtn("Back", this, ColorScheme.BLACK, ColorScheme.RED, true);
+        __backToMainMenuBtn.setFont(menuFont);
 
         commandPanel.add(__createGameBtn);
         commandPanel.add(__backToMainMenuBtn);    
@@ -299,7 +344,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         else if (__displayPanel == __gamePanel) {
             if (e.getSource() == __homeBtn) {
                 // ask if user wants to save the game
-                int select = JOptionPane.showConfirmDialog(this, "Do you want to save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
+                int select = JOptionPane.showConfirmDialog(this, "Save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (select == 0) { // yes(0), no(1), cancel(2)
                     String filename = JOptionPane.showInputDialog(this, "Enter your username", "Save Progress", JOptionPane.INFORMATION_MESSAGE);
                     __gamePanel.save(filename);

@@ -1,34 +1,31 @@
 import java.awt.Component;
+
+import javax.swing.ImageIcon;
+
 import java.awt.Color;
 
 public enum ColorScheme {
-    BLACK, BLUE, RED, GRAY, GREEN, WHITE; 
+    BLACK (new Color(28, 34, 38)),
+    BLUE (new Color(0xCDE0FF)),
+    RED (new Color(0xE10550)),
+    GRAY (new Color(143, 155, 166)),
+    GREEN (new Color(0x129468)),
+    WHITE (new Color(0xFFFFFF));
 
-    public Color getColor () {
-        // this refers to one of the objects BLACK, RED, GRAY...
-        Color c = null;
-        switch (this) {
-            case BLACK:
-                c = new Color(28, 34, 38);
-                break;
-            case RED:
-                c = new Color(0xE10550);
-                break;
-            case GRAY:
-                c = new Color(143, 155, 166);
-                break;
-            case GREEN:
-                c = new Color(0x129468);
-                break;
-            case WHITE:
-                c = new Color(0xFFFFFF);
-                break;
-            case BLUE:
-                c = new Color(0x0000FF);
-                break;
-        }
-        return c;
+    private final Color color;
+
+    private ColorScheme (Color c) {
+        color = c;
     }
+
+    /**
+     * 
+     private ColorScheme (ImageIcon icon) {
+         this.icon = icon;
+        }
+    */
+
+    public Color getColor () {return color;}
 
     public static void setColor (Component comp, ColorScheme bg, ColorScheme fg) {
         comp.setBackground(bg.getColor());
