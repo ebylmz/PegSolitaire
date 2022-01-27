@@ -14,6 +14,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.text.StyleContext.NamedStyle;
 
 // import java.awt.GridLayout;
 // import javax.swing.JPanel;
@@ -244,6 +245,16 @@ public class PegSolitaire extends JFrame implements ActionListener {
         return commandPanel;
     }
 
+    public boolean setGamePanel (String filename) {
+        if (__gamePanel != null)
+            remove(__gamePanel);
+
+        __homeBtn = new JButton();
+        __homeBtn.addActionListener(this);
+        __gamePanel = new GamePanel(__homeBtn, filename);
+        return __gamePanel.gameBoard() != null;
+    }
+
     public void setGamePanel () {
         if (__gamePanel != null)
             remove(__gamePanel);
@@ -280,9 +291,13 @@ public class PegSolitaire extends JFrame implements ActionListener {
             // continue button
             else if (e.getSource() == __menuBtn[1]) {
                 //! NOT IMPLEMENTED YET
-                // load the game
                 // show previos games (they are in seperate file)
-                setDisplayPanel(__gamePanel);
+                String filename = JOptionPane.showInputDialog(this, "Enter your username:", "Load Game", JOptionPane.QUESTION_MESSAGE);
+                if (filename != null) {
+                    // load the game
+                    if (setGamePanel(filename))
+                        setDisplayPanel(__gamePanel);
+                }
             }
             // exit button
             else if (e.getSource() == __menuBtn[2]) 

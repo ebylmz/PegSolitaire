@@ -84,9 +84,11 @@ public class GamePanel extends JPanel implements ActionListener {
     /* for load game */
     public GamePanel (JButton homeButton, String filename) {
         setLayout(new BorderLayout());
-        load(filename);
+        // first set Top control panel because load function
+        // uses homeButton in case of exceptions to return the main menu
         setTopControlPanel(homeButton);
         setBottomControlPanel();
+        load(filename);
         //! random mode not implemented yet
     }
 
@@ -105,6 +107,8 @@ public class GamePanel extends JPanel implements ActionListener {
                     ++n;
         return n;
     }
+
+    public JButton[][] gameBoard() {return __gameBoard;}
 
     public Stack<Movement> allMovements () {
         return __allMov;
@@ -323,8 +327,18 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void setTriangleBoard () {
-        //! NOT IMPLEMENTED YET
-        System.out.println("NOT IMPLEMENTED YET");
+        __boardPanel.setLayout(new GridLayout(8, 8));
+        __gameBoard = new JButton[8][8];
+
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < i; ++j)
+                __gameBoard[i][j] = cellButton(__boardPanel, CellValue.PEG);
+            for (int j = i; j < 8; ++j)
+                __gameBoard[i][j] = cellButton(__boardPanel, CellValue.WALL);
+        }
+        __gameBoard[0][0].setActionCommand(".");
+        __gameBoard[0][0].setIcon(__emptyIcon);
+        __gameBoard[0][0].setEnabled(true);
     } 
     
     private JButton cellButton (JPanel panel, CellValue val) {
@@ -558,32 +572,76 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void load (String filename) {
         // scanner will close itself automaticly (required AutoCloseable interface)
-        try (Scanner reader = new Scanner(new File(filename));) {
+        try (Scanner reader = new Scanner(new File("../userBoards/" + filename + ".txt"));) {
             // first line contains Game configurations
             // GameMode(string), NumOfMov(int) BoardRow(int) BoardCol(int)
             String str = reader.next();
-            int numOfMov = reader.nextInt();
+            int numOfMov = reader.nextInt(); 
             int row = reader.nextInt();
             int col = reader.nextInt();
 
-            GameMode gameMode;
-            if (str.equals(GameMode.USER))
+            reader.nextLine();  // skip the rest of the line
+
+            GameMode gameMode;  //!! NOT USED YET
+            if (str.equalsIgnoreCase("USER"))
                 gameMode = GameMode.USER;
-            else if (str.equals(GameMode.COMPUTER))
+            else if (str.equalsIgnoreCase("COMPUTER"))
                 gameMode = GameMode.COMPUTER;
             else
                 throw new IllegalArgumentException();
 
+            if (__boardPanel != null)
+                remove(__boardPanel);
+            
+            // set Board Panel (keeps each buttons to represent cells of PegSolitaire)
+            __boardPanel = new JPanel(new GridLayout(row, col));
+            __boardPanel.setBackground(ColorScheme.BLACK.getColor());
+            __boardPanel.setBorder(null);
+
             __gameBoard = new JButton[row][col];
-            //! create the board
+            for (int i = 0; i < row; ++i) {
+                String line = reader.nextLine();
+                for (int j = 0; j < col; ++j) {
+                    
+                    System.out.printf("%c ", line.charAt(j * 2));
+                    // skip blank char and pass next value  
+                    switch (line.charAt(j * 2)) {
+                        case '.':
+                            __gameBoard[i][j] = cellButton(__boardPanel, CellValue.EMPTY);
+                            break;
+                        case 'P':
+                            __gameBoard[i][j] = cellButton(__boardPanel, CellValue.PEG);
+                            break;
+                        case ' ':
+                            __gameBoard[i][j] = cellButton(__boardPanel, CellValue.WALL);
+                            break;
+                        default:
+                            System.out.printf("%c\n", line.charAt(j * 2));
+                            throw new IllegalArgumentException();   //!!
+                    }
+                }
+                System.out.printf("\n");
+            }
+
+            add(__boardPanel);  // add board panel to the JFrame
+            __gameMode = gameMode;
+            __numOfMov = numOfMov;
+            __numOfPeg = numOfPeg();
+            // setGameStatus(); //!! NOT SURE
+            // reset/init movement for new board
+            __curMov = new Movement(__gameBoard);
+            __allMov = new Stack<Movement>();            
         }
         catch (FileNotFoundException e) {
             System.out.println("Something went wrong.");
             e.printStackTrace();
         }
         catch (IllegalArgumentException e) {
-            System.out.println("Invalid board carachter detected");
-            //! so on ?
+            System.out.println("Invalid file format");
+            __gameBoard = null; // set board as null, since not fully filled
+            JOptionPane.showMessageDialog(
+                this, "Given file not in suitable format", "Load Game", JOptionPane.ERROR_MESSAGE);
+            __homeBtn.doClick();
         }
     }
 

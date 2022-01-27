@@ -1,0 +1,10 @@
+USER 14 9 9
+      P P .      
+      . . .      
+      P P .      
+P P . . P P P . P
+P P P P P . P P .
+P P P P . . P P P
+      P . P      
+      P P .      
+      P P .      
