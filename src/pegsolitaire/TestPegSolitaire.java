@@ -1,3 +1,5 @@
+package pegsolitaire;
+
 public class TestPegSolitaire {
     public static void main(String[] args) {
         new PegSolitaire();

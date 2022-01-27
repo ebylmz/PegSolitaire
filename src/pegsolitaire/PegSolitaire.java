@@ -1,3 +1,4 @@
+package pegsolitaire;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -41,7 +42,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
     public PegSolitaire () {
         super("PegSolitaire");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setIconImage(new ImageIcon("../img/logo.png").getImage());
+        setIconImage(new ImageIcon("img/logo.png").getImage());
         setLayout(new BorderLayout());
         setSize(650, 750);
         
@@ -93,7 +94,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
                 "<pre>PegSolitaire</pre>" +
             "</p></html>");
         
-        __welcomeLabel.setIcon(new ImageIcon("../img/warrior.png"));
+        __welcomeLabel.setIcon(new ImageIcon("img/warrior.png"));
         __welcomeLabel.setLocation(300, 0);
         __welcomeLabel.setSize(300, 500);
         __welcomeLabel.setIconTextGap(20);
@@ -181,17 +182,17 @@ public class PegSolitaire extends JFrame implements ActionListener {
         }        
 
         __boardTypeBtn[0].setText("French");
-        __boardTypeBtn[0].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[0].setIcon(new ImageIcon("img/b1.png"));
         __boardTypeBtn[1].setText("German");
-        __boardTypeBtn[1].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[1].setIcon(new ImageIcon("img/b1.png"));
         __boardTypeBtn[2].setText("Asymetrical");
-        __boardTypeBtn[2].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[2].setIcon(new ImageIcon("img/b1.png"));
         __boardTypeBtn[3].setText("English");
-        __boardTypeBtn[3].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[3].setIcon(new ImageIcon("img/b1.png"));
         __boardTypeBtn[4].setText("Diamond");
-        __boardTypeBtn[4].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[4].setIcon(new ImageIcon("img/b1.png"));
         __boardTypeBtn[5].setText("Triangular");
-        __boardTypeBtn[5].setIcon(new ImageIcon("../img/b1.png"));
+        __boardTypeBtn[5].setIcon(new ImageIcon("img/b1.png"));
         return boardTypePanel;
     }
 
@@ -215,8 +216,8 @@ public class PegSolitaire extends JFrame implements ActionListener {
                         if (__gamePanel.curMovement().start() == null) {
                             // if random movement cannot made that means game is over
                             if (__gamePanel.curMovement().setRandomMovement()) {
-                                __gamePanel.curMovement().start().setIcon(new ImageIcon("../img/selectedCell.png"));
-                                __gamePanel.curMovement().end().setIcon(new ImageIcon("../img/possibleCell.png"));
+                                __gamePanel.curMovement().start().setIcon(new ImageIcon("img/selectedCell.png"));
+                                __gamePanel.curMovement().end().setIcon(new ImageIcon("img/possibleCell.png"));
                             }
                             else {
                                 // display game score

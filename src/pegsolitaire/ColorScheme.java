@@ -1,3 +1,5 @@
+package pegsolitaire;
+
 
 import java.awt.Component;
 import javax.swing.ImageIcon;

@@ -1,3 +1,4 @@
+package pegsolitaire;
 
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
@@ -34,10 +35,10 @@ public class GamePanel extends JPanel implements ActionListener {
     // private JPanel __statusPanel;
     private JPanel __boardPanel;
     private JButton __gameBoard[][];
-    final private ImageIcon __pegIcon = new ImageIcon("../img/pegCell.png");
-    final private ImageIcon __emptyIcon = new ImageIcon("../img/emptyCell.png");
-    final private ImageIcon __selectedCell = new ImageIcon("../img/selectedCell.png");
-    final private ImageIcon __possibleCell = new ImageIcon("../img/possibleCell.png");
+    final private ImageIcon __pegIcon = new ImageIcon("img/pegCell.png");
+    final private ImageIcon __emptyIcon = new ImageIcon("img/emptyCell.png");
+    final private ImageIcon __selectedCell = new ImageIcon("img/selectedCell.png");
+    final private ImageIcon __possibleCell = new ImageIcon("img/possibleCell.png");
 
     private JPanel __topControlPanel;
     private JButton __undoBtn;
@@ -128,7 +129,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // __undoBtn.setHorizontalTextPosition(JButton.CENTER);
         // __undoBtn.setVerticalTextPosition(JButton.BOTTOM);
         // __undoBtn.setPreferredSize(new Dimension(50, 50));
-        __undoBtn.setIcon(new ImageIcon("../img/undo.png"));
+        __undoBtn.setIcon(new ImageIcon("img/undo.png"));
         __undoBtn.addActionListener(this);
         // initially not clickable
         __undoBtn.setEnabled(false); 
@@ -136,7 +137,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // home button
         __homeBtn = homeButton; 
         __homeBtn.setBackground(ColorScheme.BLACK.getColor());
-        __homeBtn.setIcon(new ImageIcon("../img/home.png"));
+        __homeBtn.setIcon(new ImageIcon("img/home.png"));
         __homeBtn.setBorder(emptyBorder);
         
         // set top control panel which keeps undo and home buttons 
@@ -152,13 +153,13 @@ public class GamePanel extends JPanel implements ActionListener {
         Border emptyBorder = BorderFactory.createEmptyBorder();
 
         __nextMovBtn = new JButton();
-        __nextMovBtn.setIcon(new ImageIcon("../img/playAuto.png"));
+        __nextMovBtn.setIcon(new ImageIcon("img/playAuto.png"));
         __nextMovBtn.setBackground(ColorScheme.BLACK.getColor());
         __nextMovBtn.addActionListener(this);
         __nextMovBtn.setBorder(emptyBorder);
 
         __saveBtn = new JButton();
-        __saveBtn.setIcon(new ImageIcon("../img/save.png"));
+        __saveBtn.setIcon(new ImageIcon("img/save.png"));
         __saveBtn.setBackground(ColorScheme.BLACK.getColor());
         __saveBtn.addActionListener(this);
         __saveBtn.setBorder(emptyBorder);
@@ -551,7 +552,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void save (String filename) {
         try {
-            FileWriter writer = new FileWriter("../userBoards/" + filename + ".txt");        
+            FileWriter writer = new FileWriter("userBoards/" + filename + ".txt");        
             
             // each boards are rectangular (main boards are square, user defined ones must be rectangular)
             writer.write(String.format("%s %d %d %d\n", 
@@ -577,7 +578,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void load (String filename) {
         // scanner will close itself automaticly (required AutoCloseable interface)
-        try (Scanner reader = new Scanner(new File("../userBoards/" + filename + ".txt"));) {
+        try (Scanner reader = new Scanner(new File("userBoards/" + filename + ".txt"));) {
             // first line contains Game configurations
             // GameMode(string), NumOfMov(int) BoardRow(int) BoardCol(int)
             String str = reader.next();
