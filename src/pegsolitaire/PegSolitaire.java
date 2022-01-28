@@ -6,6 +6,12 @@ import java.awt.Font;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Vector;
+
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -16,7 +22,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.text.StyleContext.NamedStyle;
 
 // import java.awt.GridLayout;
 // import javax.swing.JPanel;
@@ -37,7 +42,12 @@ public class PegSolitaire extends JFrame implements ActionListener {
     private GamePanel.BoardType __boardType;
     private GamePanel.GameMode __gameType;
 
-    private JPanel __displayPanel; // the dislaying panel on top of JFrame
+    private JPanel __loadMenuPanel;
+    private ArrayList<String[]> __userList;
+    private JRadioButton __userListBtn[];
+    private int __selectedUserIndex;
+
+    private JPanel __curDisplayPanel; // the dislaying panel on top of JFrame
 
     public PegSolitaire () {
         super("PegSolitaire");
@@ -52,7 +62,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
         // setGamePanel();
 
         // display main menu panel as start of the interface
-        setDisplayPanel(__mainMenuPanel);
+        displayPanel(__mainMenuPanel);
         // getContentPane().setBackground(ColorScheme.BLACK.getColor()); //! NOT NEEDED I THINK
         
         setVisible(true);    
@@ -173,6 +183,7 @@ public class PegSolitaire extends JFrame implements ActionListener {
             // set the text at the bottom center of the button
             __boardTypeBtn[i].setHorizontalTextPosition(JButton.CENTER);
             __boardTypeBtn[i].setVerticalTextPosition(JButton.BOTTOM);
+            __boardTypeBtn[i].setIconTextGap(20);
             ColorScheme.setColor(__boardTypeBtn[i], ColorScheme.BLACK, ColorScheme.RED);
             __boardTypeBtn[i].addActionListener(this);
 
@@ -182,22 +193,23 @@ public class PegSolitaire extends JFrame implements ActionListener {
         }        
 
         __boardTypeBtn[0].setText("French");
-        __boardTypeBtn[0].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[0].setIcon(new ImageIcon("img/frenchBoard.png"));
         __boardTypeBtn[1].setText("German");
-        __boardTypeBtn[1].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[1].setIcon(new ImageIcon("img/germanBoard.png"));
         __boardTypeBtn[2].setText("Asymetrical");
-        __boardTypeBtn[2].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[2].setIcon(new ImageIcon("img/asymetricalBoard.png"));
         __boardTypeBtn[3].setText("English");
-        __boardTypeBtn[3].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[3].setIcon(new ImageIcon("img/englishBoard.png"));
         __boardTypeBtn[4].setText("Diamond");
-        __boardTypeBtn[4].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[4].setIcon(new ImageIcon("img/diamondBoard.png"));
         __boardTypeBtn[5].setText("Triangular");
-        __boardTypeBtn[5].setIcon(new ImageIcon("img/b1.png"));
+        __boardTypeBtn[5].setIcon(new ImageIcon("img/triangularBoard.png"));
         return boardTypePanel;
     }
 
     public JPanel setSettingsCommandPanel () {
         // set start and back button
+
         JPanel commandPanel = new JPanel();
         ColorScheme.setColor(commandPanel, ColorScheme.BLACK);
 
@@ -250,6 +262,49 @@ public class PegSolitaire extends JFrame implements ActionListener {
         return commandPanel;
     }
 
+    public void setLoadMenuPanel () {
+        try (Scanner reader = new Scanner(new File("user/login.txt"));) {
+            __userList = new ArrayList<String[]>();
+            // read each username and password
+            while (reader.hasNextLine()) {
+                String[] user = reader.nextLine().split(", ");  // username, password
+                __userList.add(user);
+            }
+
+            // create userListPanel
+            JPanel usersPanel = new JPanel(new GridLayout(__userList.size(), 1));
+            ColorScheme.setColor(usersPanel, ColorScheme.BLACK, ColorScheme.RED);
+
+            // display the usernames with buttons
+            __userListBtn = new JRadioButton[__userList.size()];
+            ButtonGroup group = new ButtonGroup();
+            for (int i = 0; i < __userListBtn.length; ++i) {
+                __userListBtn[i] = new JRadioButton(__userList.get(i)[0]); 
+                ColorScheme.setColor(__userListBtn[i], ColorScheme.BLACK, ColorScheme.RED);
+                __userListBtn[i].addActionListener(this);
+                group.add(__userListBtn[i]);
+                usersPanel.add(__userListBtn[i]);
+            }
+
+            JPanel commandPanel = setSettingsCommandPanel();
+            __loadMenuPanel = new JPanel(new GridLayout(2, 1));
+            __loadMenuPanel.setBackground(ColorScheme.BLACK.getColor());
+            __loadMenuPanel.add(usersPanel);
+            __loadMenuPanel.add(commandPanel);
+        }
+        catch (FileNotFoundException e) {
+            System.out.println("Something went wrong");
+            //! then what?
+            e.printStackTrace();
+        }    
+        // show the saved users
+        // get the password of user to validate
+        // add create or back button
+            // setControlPanel if different than null
+            // add code to control panel actionPerformed method
+        
+    }
+
     public boolean setGamePanel (String filename) {
         if (__gamePanel != null)
             remove(__gamePanel);
@@ -269,21 +324,20 @@ public class PegSolitaire extends JFrame implements ActionListener {
         __gamePanel = new GamePanel(__homeBtn, __gameType, __boardType);
     }
 
-    public void setDisplayPanel (JPanel panel) {
-        //! card layout !!
-        if (__displayPanel != null)
-            remove(__displayPanel);
-        __displayPanel = panel;
-        
+    public void displayPanel (JPanel panel) {
+        if (__curDisplayPanel != null)
+            remove(__curDisplayPanel);
+        __curDisplayPanel = panel;
+
         // add menu panel and update the game frame
-        add(__displayPanel);
+        add(__curDisplayPanel);
         SwingUtilities.updateComponentTreeUI(this); 
     }
 
 	@Override
 	public void actionPerformed (ActionEvent e) {
         // MAIN MENU EVENTS
-        if (__displayPanel == __mainMenuPanel) {
+        if (__curDisplayPanel == __mainMenuPanel) {
             // new game button
             if (e.getSource() == __menuBtn[0]) {
                 if (__gamePanel != null) {
@@ -291,35 +345,29 @@ public class PegSolitaire extends JFrame implements ActionListener {
                     setGamePanel(); // set new Game Panel
                 }
                 // display game settings menu for settings of new game 
-                setDisplayPanel(__gameSettingsPanel);
+                displayPanel(__gameSettingsPanel);
             }
             // continue button
             else if (e.getSource() == __menuBtn[1]) {
-                //! NOT IMPLEMENTED YET
-                // show previos games (they are in seperate file)
-                String filename = JOptionPane.showInputDialog(this, "Enter your username:", "Load Game", JOptionPane.QUESTION_MESSAGE);
-                if (filename != null) {
-                    // load the game
-                    if (setGamePanel(filename))
-                        setDisplayPanel(__gamePanel);
-                }
+                setLoadMenuPanel();
+                displayPanel(__loadMenuPanel);               
             }
             // exit button
             else if (e.getSource() == __menuBtn[2]) 
                 System.exit(1);
         }
         // GAME SETTINGS MENU EVENTS
-        else if (__displayPanel == __gameSettingsPanel) {
+        else if (__curDisplayPanel == __gameSettingsPanel) {
             // COMMAND BUTTONS (CREATE & BACK)
             if (e.getSource() instanceof JButton) {
                 if (e.getSource() == __backToMainMenuBtn) {
                     setGameSettingsPanel(); // clear settings panel
-                    setDisplayPanel(__mainMenuPanel);
+                    displayPanel(__mainMenuPanel);
                 }
                 else if (e.getSource() == __createGameBtn) {
                     // create the game which properties specified
                     setGamePanel();
-                    setDisplayPanel(__gamePanel);
+                    displayPanel(__gamePanel);
                 }
             }
             // GAME SETTING BUTTONS (CREATE & BACK)
@@ -360,32 +408,55 @@ public class PegSolitaire extends JFrame implements ActionListener {
                     __createGameBtn.setEnabled(true);
             }
         }
+        else if (__curDisplayPanel == __loadMenuPanel) {
+            if (e.getSource() instanceof JRadioButton) {
+                for (int i = 0; i < __userListBtn.length; ++i)
+                    if (__userListBtn[i] == e.getSource()) {
+                        __selectedUserIndex = i;
+                        __createGameBtn.setEnabled(true);
+                        break;
+                    }
+            }
+            else if (e.getSource() instanceof JButton) {
+                if (e.getSource() == __backToMainMenuBtn) {
+                    setGameSettingsPanel(); // clear settings panel
+                    displayPanel(__mainMenuPanel);
+                }
+                else if (e.getSource() == __createGameBtn) {
+                    boolean done = false;
+                    // get the password
+                    do {
+                        String password = JOptionPane.showInputDialog(this, "Enter your password", "User Login", JOptionPane.QUESTION_MESSAGE);
+                        if (__userList.get(__selectedUserIndex)[1].equals(password)) {
+                            done = true;
+                            // create the game which properties specified
+                            String username = __userList.get(__selectedUserIndex)[0];
+                            setGamePanel(username);
+                            displayPanel(__gamePanel);
+                        }
+                        else {
+                            int selection = JOptionPane.showConfirmDialog(this, "Wrong password, try again", "Error", JOptionPane.ERROR_MESSAGE);
+                            done = (selection == 0) ? false : true; // returns 0 for yes
+                        }
+                    } while (!done);
+                }
+            }
+        }
         // GAME EVENTS
-        else if (__displayPanel == __gamePanel) {
+        else if (__curDisplayPanel == __gamePanel) {
             if (e.getSource() == __homeBtn) {
                 // ask if user wants to save the game
-                /*
-                int select = JOptionPane.showConfirmDialog(this, "Save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
-                if (select == 0) { // yes(0), no(1), cancel(2)
-                    String filename = JOptionPane.showInputDialog(this, "Enter your username", "Save Progress", JOptionPane.INFORMATION_MESSAGE);
-                    __gamePanel.save(filename);
-                }
-                */
-                setDisplayPanel(__mainMenuPanel);
+                int select = JOptionPane.showConfirmDialog(
+                    this, "Save your progress?", "Save Progress", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (select == 0) // yes(0), no(1), cancel(2)
+                    __gamePanel.saveButton().doClick();
+                displayPanel(__mainMenuPanel);
             }
         }
 	}
 
     private JButton menuBtn (String text, ActionListener listener, ColorScheme bg, ColorScheme fg, boolean isEnable) {
         JButton btn = new JButton(text);
-        btn.addActionListener(listener);
-        ColorScheme.setColor(btn, bg, fg);
-        btn.setEnabled(isEnable);
-        return btn;
-    }
-
-    private JButton menuBtn (ImageIcon img, ActionListener listener, ColorScheme bg, ColorScheme fg, boolean isEnable) {
-        JButton btn = new JButton(img);
         btn.addActionListener(listener);
         ColorScheme.setColor(btn, bg, fg);
         btn.setEnabled(isEnable);

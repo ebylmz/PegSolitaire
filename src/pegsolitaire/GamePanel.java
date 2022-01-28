@@ -31,6 +31,8 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public static enum CellValue {PEG, EMPTY, WALL}
 
+    final String REGISTERED_USER_FILE = "user/login.txt";//!!!!!!!!1
+    final String USER_BOARD_PATH = "user/boards";
 
     // private JPanel __statusPanel;
     private JPanel __boardPanel;
@@ -48,6 +50,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private JButton __saveBtn;
     private JButton __nextMovBtn;
     
+
     private GameMode __gameMode;
     private Movement __curMov; // keeps the current movement (necassary for undo movement)
     private Stack<Movement> __allMov;
@@ -65,23 +68,47 @@ public class GamePanel extends JPanel implements ActionListener {
         setTopControlPanel(homeButton);
         setBottomControlPanel();
         __gameMode = gameMode;
+    }
 
-        /*
-        if (__gameMode == GameMode.COMPUTER) {
-            int delay = 3000; 
-            ActionListener taskPerformer = new ActionListener() {
-                public void actionPerformed(ActionEvent evt) {
-                    //Empty the label here. This code will be called once the timeout of three seconds has been passed
-                    if(!moveRandom())
-                        ((Timer)evt.getSource()).stop();
-                }
-            };
-            new Timer(delay, taskPerformer).start();
+    /**
+     * Checks if given user informations indicates registered user or not
+     * @param username
+     * @param password
+     * @return 0 for registered, 1 for non-registered, 2 for registered but wrong password 
+     */
+    public int isRegistered (String username, String password) {
+        int status = 1; // assume user is not registered
+        try (Scanner reader = new Scanner(new File("user/login.txt"));) {
+
+            while (reader.hasNextLine() && status == 1) {
+                String[] user = reader.nextLine().split(", ");
+                System.out.printf("%s %s\n", user[0], user[1]);
+                if (username.equals(user[0]))
+                    status = (password.equals(user[1])) ? 0 : 2;
+            }
         }
-        */
-        
-        // if (__gameMode == GameMode.COMPUTER)
-        //     while (moveRandom());
+        catch (FileNotFoundException e) {
+            System.out.println("Something went wrong");
+            //! then what?
+            e.printStackTrace();
+        }
+        return status;
+    }
+
+    /**
+     * registeres given user
+     * @param username
+     * @param password
+     */
+    public void registerUser (String username, String password) {
+        // open file in append mode
+        try (FileWriter writer = new FileWriter("user/login.txt", true);) {
+            writer.write(String.format("%s, %s\n", username, password));
+        }
+        catch (IOException e) {
+            System.err.println("Something went wrong.");
+            e.printStackTrace();           
+        }
     }
 
     /* for load game */
@@ -91,7 +118,7 @@ public class GamePanel extends JPanel implements ActionListener {
         // uses homeButton in case of exceptions to return the main menu
         setTopControlPanel(homeButton);
         setBottomControlPanel();
-        load(filename);
+        load("user/boards/" + filename + ".txt");
         //! random mode not implemented yet
     }
 
@@ -110,6 +137,8 @@ public class GamePanel extends JPanel implements ActionListener {
                     ++n;
         return n;
     }
+
+    public JButton saveButton () {return __saveBtn;}
 
     public JButton[][] gameBoard() {return __gameBoard;}
 
@@ -411,19 +440,6 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public boolean canMakeMovement(JButton btn) {
         Movement mov = new Movement(__gameBoard, btn);
-
-        //! FOR TEST PURPOSE        
-        int[] indexes = mov.findLocation(btn); 
-        if (mov.setMovement(btn, Movement.Direction.DOWN))
-            System.out.printf("[%d][%d]: D\n", indexes[0], indexes[1]);
-        if (mov.setMovement(btn, Movement.Direction.UP))
-            System.out.printf("[%d][%d]: U\n", indexes[0], indexes[1]);
-        if (mov.setMovement(btn, Movement.Direction.LEFT))
-            System.out.printf("[%d][%d]: L\n", indexes[0], indexes[1]);
-        if (mov.setMovement(btn, Movement.Direction.RIGHT))
-            System.out.printf("[%d][%d]: R\n", indexes[0], indexes[1]);
-        //! FOR TEST PURPOSE        
-
         return      mov.setMovement(btn, Movement.Direction.UP) ||
                     mov.setMovement(btn, Movement.Direction.DOWN) ||
                     mov.setMovement(btn, Movement.Direction.RIGHT) ||
@@ -442,9 +458,35 @@ public class GamePanel extends JPanel implements ActionListener {
         // SAVE EVENT
         else if (selectedBtn == __saveBtn) {
             // get the filename to save the current game progress
-            String filename = JOptionPane.showInputDialog(this, "Enter your user name");
-            if (filename != null)   // user enters cancel button
-                save(filename);
+            String username = JOptionPane.showInputDialog(
+                this, "Enter your user name", "Username", JOptionPane.QUESTION_MESSAGE);
+            if (username != null) { // user enters cancel button
+                Boolean done = false;
+                do {
+                    String password = JOptionPane.showInputDialog(
+                        this, "Enter your password", "Password",  JOptionPane.QUESTION_MESSAGE);
+                    if (password == null)   // user hits cancel
+                        done = true;
+                    else {
+                        switch (isRegistered(username, password)) {
+                            case 0: // registered user
+                                save("user/boards/" + username + ".txt");
+                                done = true;
+                                break;
+                            case 1: // non-registered user
+                                registerUser(username, password);
+                                save("user/boards/" + username + ".txt");
+                                done = true;
+                                break;
+                            case 2: // registered but wrong password
+                                int select = JOptionPane.showConfirmDialog(this, "Wrong password. Try again", "Error", JOptionPane.ERROR_MESSAGE);
+                                if (select != 0)    // user hits no or cancel
+                                    done = true;
+                                break;
+                        } 
+                    }
+                } while (!done);
+            }    
         }
         // REST OF THEM GAME BOARD BUTTON EVENTS
         else if (__curMov.start() == null) {
@@ -552,8 +594,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void save (String filename) {
         try {
-            FileWriter writer = new FileWriter("userBoards/" + filename + ".txt");        
-            
+            FileWriter writer = new FileWriter(filename);        
             // each boards are rectangular (main boards are square, user defined ones must be rectangular)
             writer.write(String.format("%s %d %d %d\n", 
                 __gameMode, __numOfMov, __gameBoard.length, __gameBoard[0].length));
@@ -578,7 +619,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void load (String filename) {
         // scanner will close itself automaticly (required AutoCloseable interface)
-        try (Scanner reader = new Scanner(new File("userBoards/" + filename + ".txt"));) {
+        try (Scanner reader = new Scanner(new File(filename));) {
             // first line contains Game configurations
             // GameMode(string), NumOfMov(int) BoardRow(int) BoardCol(int)
             String str = reader.next();
@@ -639,7 +680,7 @@ public class GamePanel extends JPanel implements ActionListener {
             __allMov = new Stack<Movement>();            
         }
         catch (FileNotFoundException e) {
-            System.out.println("Something went wrong.");
+            System.out.println("Something went wrong");
             e.printStackTrace();
         }
         catch (IllegalArgumentException e) {

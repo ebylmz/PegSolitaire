@@ -1,0 +1,10 @@
+USER 26 9 9
+        P        
+      P . .      
+    P . P . .    
+  P . . . P . P  
+. . P . P P P P P
+  P P P P P P P  
+    P P P P P    
+      P P P      
+        .        
