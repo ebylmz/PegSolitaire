@@ -1,7 +1,4 @@
-eby, 12345
-Serkan, serkan1234
-ysa, sivas
-Emine, 12345 seftali
-Zulal, zulal234
-Arda, arda1234
-zulal, zulal1234
+Frozen Gunner, frozen1234
+eby, eby1234
+snowflake, snow123
+Masked Titan, titan1234
