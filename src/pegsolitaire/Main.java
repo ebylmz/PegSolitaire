@@ -1,5 +1,5 @@
 /**
- * @file    TestPegSolitaire.java
+ * @file    Main.java
  * @author  Emirkan Burak Yılmaz 
  * @brief   Peg Solitaire Driver/Test
  * @version 0.1
@@ -8,11 +8,10 @@
  * @copyright Copyright (c) 2021
  */
 
-
 package pegsolitaire;
 
 /** Tests/Plays PegSolitaire */
-public class TestPegSolitaire {
+public class Main {
     public static void main(String[] args) {
         // call the PegSolitaire class no argument constructor
         // which presents default game enviorenment

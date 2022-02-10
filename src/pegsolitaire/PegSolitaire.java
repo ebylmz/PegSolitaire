@@ -262,8 +262,8 @@ public class PegSolitaire extends JFrame implements ActionListener {
                         if (__gamePanel.curMovement().start() == null) {
                             // if random movement cannot made that means game is over
                             if (__gamePanel.curMovement().setRandomMovement()) {
-                                __gamePanel.curMovement().start().setIcon(new ImageIcon("img/selectedCell.png"));
-                                __gamePanel.curMovement().end().setIcon(new ImageIcon("img/possibleCell.png"));
+                                __gamePanel.curMovement().start().setSelected(true); 
+                                __gamePanel.curMovement().end().setPossible(true);
                             }
                             else {
                                 // display game score
