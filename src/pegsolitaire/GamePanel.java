@@ -33,12 +33,15 @@ import pegsolitaire.Cell.CellType;
 
 
 /** Game Panel of PegSolitaire */
-public class GamePanel extends JPanel implements ActionListener {
-    /** Game/Play mode */
+public class GamePanel extends JPanel {
+    /** Game/Play mode */ 
     public static enum GameMode {USER, COMPUTER}
 
     /** Board types */
     public static enum BoardType {FRENCH, GERMAN, ASYMETRICAL, ENGLISH, DIAMOND, TRIANGULAR}
+
+    private final GamePlayEventHandler gamePlayEventHandler = new GamePlayEventHandler();
+    private final SaveButtonHandler saveButtonHandler = new SaveButtonHandler(this);
 
     private JPanel __boardPanel;
     private Cell __board[][]; // game board for checking validty of movement
@@ -172,9 +175,17 @@ public class GamePanel extends JPanel implements ActionListener {
         __undoBtn.setBorder(emptyBorder);
         
         __undoBtn.setIcon(new ImageIcon("img/undo.png"));
-        __undoBtn.addActionListener(this);
+
         // initially not clickable
         __undoBtn.setEnabled(false); 
+
+        // implement an event handler as anonymous inner class
+        __undoBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                undo();
+            }
+        });
         
         // home button
         __homeBtn = homeButton; 
@@ -200,14 +211,24 @@ public class GamePanel extends JPanel implements ActionListener {
         __nextMovBtn = new JButton();
         __nextMovBtn.setIcon(new ImageIcon("img/playAuto.png"));
         __nextMovBtn.setBackground(ColorScheme.BLACK.getColor());
-        __nextMovBtn.addActionListener(this);
         __nextMovBtn.setBorder(emptyBorder);
+
+        // implement an event handler as anonymous inner class
+        __nextMovBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                moveRandom();
+                if (isGameOver())
+                    displayGameOverMessage();
+            }
+            
+        });
 
         __saveGameBtn = new JButton();
         __saveGameBtn.setIcon(new ImageIcon("img/save.png"));
         __saveGameBtn.setBackground(ColorScheme.BLACK.getColor());
-        __saveGameBtn.addActionListener(this);
         __saveGameBtn.setBorder(emptyBorder);
+        __saveGameBtn.addActionListener(saveButtonHandler);
         
         if (__gameMode == GameMode.COMPUTER) {
             __nextMovBtn.setEnabled(false);
@@ -272,7 +293,7 @@ public class GamePanel extends JPanel implements ActionListener {
             int col = (3 <= i && i <= 5) ? 1 : 0;
 
             for (int j = 0; j < __board[i].length; ++j)
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, this);    
+                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);    
         }
         __board[4][4].setCellType(CellType.EMPTY);
     }
@@ -283,28 +304,28 @@ public class GamePanel extends JPanel implements ActionListener {
 
         for (int i = 0, n = 2, m = 5; i < 2; ++i, --n, ++m) {
             for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
             
             for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
             for (int j = m; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
         }
 
         for (int i = 2; i < 5; ++i)
             for (int j = 0; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
         for (int i = 5, n = 1, m = 6; i < 7; ++i, ++n, --m) {
             for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
             
             for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
             for (int j = m; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
         }
 
         __board[2][3].setCellType(CellType.EMPTY);
@@ -322,7 +343,7 @@ public class GamePanel extends JPanel implements ActionListener {
         for (int i = 0; i < __board.length; ++i) {
             int col = (3 <= i && i <= 5) ? 1 : 0;
             for (int j = 0; j < __board[i].length; ++j) 
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, this);  
+                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);  
         }
         __board[4][3].setCellType(CellType.EMPTY);
     }
@@ -339,7 +360,7 @@ public class GamePanel extends JPanel implements ActionListener {
         for (int i = 0; i < __board.length; ++i) {
             int col = (2 <= i && i <= 4) ? 1 : 0;
             for (int j = 0; j < __board[i].length; ++j) 
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, this);  
+                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);  
         }
         __board[3][3].setCellType(CellType.EMPTY);
     }
@@ -350,27 +371,27 @@ public class GamePanel extends JPanel implements ActionListener {
 
         for (int i = 0, n = 4, m = 5; i < 4; ++i, --n, ++m) {
             for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
 
             for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
             for (int j = m; j < 9; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
         }
 
         for (int i = 0; i < 9; ++i)
-            __board[4][i] = new Cell(CellType.PEG, __boardPanel, this);
+            __board[4][i] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
         for (int i = 5, n = 1, m = 8; i < 9; ++i, ++n, --m) {
             for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
 
             for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
 
             for (int j = m; j < 9; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
         }
         __board[4][4].setCellType(CellType.EMPTY);
     }
@@ -381,9 +402,9 @@ public class GamePanel extends JPanel implements ActionListener {
 
         for (int i = 0; i < 8; ++i) {
             for (int j = 0; j < i; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
             for (int j = i; j < 8; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, this);
+                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
         }
         __board[0][0].setCellType(CellType.EMPTY);
         __board[0][0].setEnabled(true);
@@ -414,28 +435,21 @@ public class GamePanel extends JPanel implements ActionListener {
                     mov.setMovement(c, Movement.Direction.LEFT);
     }
 
-    @Override
-    public void actionPerformed (ActionEvent e) {
-        JButton selectedBtn = (JButton) e.getSource();
-        // UNDO EVENT
-        if (selectedBtn == __undoBtn) 
-            undo();
-        // ONE AUTO MOVEMENT EVENT
-        else if (selectedBtn == __nextMovBtn) {
-            moveRandom();
-            if (isGameOver())
-                displayGameOverMessage();
-        }
-        // saveGame EVENT
-        else if (selectedBtn == __saveGameBtn) {
+    private class SaveButtonHandler implements ActionListener {
+        private JPanel topPanel;
+
+        public SaveButtonHandler(JPanel topPanel) {this.topPanel = topPanel;}
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
             // get the filename to saveGame the current game progress
             String username = JOptionPane.showInputDialog(
-                this, "Enter your user name", "Username", JOptionPane.QUESTION_MESSAGE);
+                topPanel, "Enter your user name", "Username", JOptionPane.QUESTION_MESSAGE);
             if (username != null) { // user enters cancel button
                 Boolean done = false;
                 do {
                     String password = JOptionPane.showInputDialog(
-                        this, "Enter your password", "Password",  JOptionPane.QUESTION_MESSAGE);
+                        topPanel, "Enter your password", "Password",  JOptionPane.QUESTION_MESSAGE);
                     if (password == null)   // user hits cancel
                         done = true;
                     else {
@@ -450,7 +464,7 @@ public class GamePanel extends JPanel implements ActionListener {
                                 done = true;
                                 break;
                             case 2: // registered but wrong password
-                                int select = JOptionPane.showConfirmDialog(this, "Wrong password. Try again", "Error", JOptionPane.ERROR_MESSAGE);
+                                int select = JOptionPane.showConfirmDialog(topPanel, "Wrong password. Try again", "Error", JOptionPane.ERROR_MESSAGE);
                                 if (select != 0)    // user hits no or cancel
                                     done = true;
                                 break;
@@ -459,21 +473,23 @@ public class GamePanel extends JPanel implements ActionListener {
                 } while (!done);
             }    
         }
-        // REST OF THEM GAME BOARD CELL EVENTS
-        else {
-            // since Cell extends from JButton, upcasting is valid
-            Cell cell = (Cell) selectedBtn;
+    }
+
+    private class GamePlayEventHandler implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            Cell selectedCell = (Cell) e.getSource();
+            // if this is first cell selection (start must be null)
             if (__curMov.start() == null) {
                 // ignore selection of the cell which are Wall and Empty cells
-                if (cell.getCellType() == CellType.PEG) {
-                    __curMov.setStart(cell);
+                if (selectedCell.getCellType() == CellType.PEG) {
+                    __curMov.setStart(selectedCell);
                     
                     __nextPossibleCell = __curMov.nextPossibleMov();
                     if (__nextPossibleCell == null)
                         __curMov.setStart(null);
                     else {
                         // set hover effect on selected cell                    
-                        cell.setSelected(true);
+                        selectedCell.setSelected(true);
 
                         // show possible movements by hovering cells
                         for (var c : __nextPossibleCell)
@@ -482,9 +498,9 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
             // if start cell was selected, current selected cell should be end cell
-            else if (cell != __curMov.start()) {
+            else if (selectedCell != __curMov.start()) {
                 // set hover effect on selected cell
-                __curMov.setEnd(cell);
+                __curMov.setEnd(selectedCell);
                 // apply movement
                 if (move(__curMov)) {
                     if (isGameOver())
@@ -499,7 +515,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
                 // leave the possible cells as unselected 
                 for (var c : __nextPossibleCell)
-                    if (c != cell)
+                    if (c != selectedCell)
                         c.setPossible(false);
             }
         }
@@ -590,7 +606,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 __gameMode, __numOfMov, __board.length, __board[0].length));
             for (int i = 0; i < __board.length; ++i) {
                 for (int j = 0; j < __board[i].length; ++j) {
-                    writer.write(__board[i][j].toString()); //!!!! CHECK İF IT WORKSSSSSSSSSSSSSSSSSSSSSSSS ow get action cıommand 
+                    writer.write(__board[i][j].toString()); 
                     if (j < __board[i].length - 1) writer.write(" ");
                 }
                 if (i < __board.length - 1) writer.write("\n");
@@ -645,10 +661,10 @@ public class GamePanel extends JPanel implements ActionListener {
                     // skip blank char and pass next value  
                     switch (line.charAt(j * 2)) {
                         case '.':
-                            __board[i][j] = new Cell(CellType.EMPTY , __boardPanel, this); 
+                            __board[i][j] = new Cell(CellType.EMPTY , __boardPanel, gamePlayEventHandler); 
                             break;
                         case 'P':
-                            __board[i][j] = new Cell(CellType.PEG, __boardPanel, this);
+                            __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
                             break;
                         case ' ':
                             //! since walls are unclickable, no action listener required
