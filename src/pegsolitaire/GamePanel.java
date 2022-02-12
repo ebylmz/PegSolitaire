@@ -40,8 +40,8 @@ public class GamePanel extends JPanel {
     /** Board types */
     public static enum BoardType {FRENCH, GERMAN, ASYMETRICAL, ENGLISH, DIAMOND, TRIANGULAR}
 
-    private final GamePlayEventHandler gamePlayEventHandler = new GamePlayEventHandler();
-    private final SaveButtonHandler saveButtonHandler = new SaveButtonHandler(this);
+    private final GamePlayEventHandler GAME_PLAY_EVENT_HANDLER = new GamePlayEventHandler();
+    private final SaveEventHandler SAVE_EVENT_HANDLER = new SaveEventHandler(this);
 
     private JPanel __boardPanel;
     private Cell __board[][]; // game board for checking validty of movement
@@ -50,7 +50,7 @@ public class GamePanel extends JPanel {
     private JButton __undoBtn;  
     private JButton __homeBtn;  
 
-    private JPanel __bottomControlPanel;  // contains the saveGame and auto movement button
+    private JPanel __bottomControlPanel;  // contains the saveGame and next movement button
     private JButton __saveGameBtn;
     private JButton __nextMovBtn;
 
@@ -70,22 +70,37 @@ public class GamePanel extends JPanel {
     public GamePanel (JButton homeButton, GameMode gameMode, BoardType boardType) {
         setLayout(new BorderLayout());
         // initialize the game board selected by user
-        __gameMode = gameMode;
-        setGameBoard(boardType);
+        String boardName = "";
+        switch (boardType) {
+            case FRENCH: 
+                boardName = "french"; break;
+            case GERMAN: 
+                boardName = "german"; break;
+            case ASYMETRICAL:
+                boardName = "asymetrical"; break;
+            case ENGLISH: 
+                boardName = "english"; break;
+            case DIAMOND: 
+                boardName = "diamond"; break;
+            case TRIANGULAR: 
+                boardName = "triangular"; break;
+        }
+        loadGame("system/gameBoards/" + boardName + ".txt");
+        __gameMode = gameMode;  // after loading game set gameMode
         setTopControlPanel(homeButton);
         setBottomControlPanel();
     }
 
     /**
      * Creates the game panel with the given the file which contains configuration information such as game board, game type
-     * @param homeButton
-     * @param filename
+     * @param homeButton 
+     * @param username username to reach player previous sections
      */
-    public GamePanel (JButton homeButton, String filename) {
+    public GamePanel (JButton homeButton, String username) {
         setLayout(new BorderLayout());
         // first set Top control panel because loadGame function
-        // uses homeButton in case of exceptions to return the main menu
-        loadGame("user/boards/" + filename + ".txt");
+        // uses homeButton in case of any exceptions to return the main menu
+        loadGame("user/gameBoards/" + username + ".txt");
         setTopControlPanel(homeButton);
         setBottomControlPanel();
     }
@@ -154,6 +169,9 @@ public class GamePanel extends JPanel {
     /*** Game board*/
     public Cell[][] gameBoard() {return __board;}
 
+    /** Game mode */
+    public GameMode gameMode() {return __gameMode;}
+
     /*** All the movement that made so far*/
     public Stack<Movement> allMovements () {return __allMov;}
 
@@ -174,7 +192,7 @@ public class GamePanel extends JPanel {
         //set border to empty
         __undoBtn.setBorder(emptyBorder);
         
-        __undoBtn.setIcon(new ImageIcon("img/undo.png"));
+        __undoBtn.setIcon(new ImageIcon("system/img/undo.png"));
 
         // initially not clickable
         __undoBtn.setEnabled(false); 
@@ -190,7 +208,7 @@ public class GamePanel extends JPanel {
         // home button
         __homeBtn = homeButton; 
         __homeBtn.setBackground(ColorScheme.BLACK.getColor());
-        __homeBtn.setIcon(new ImageIcon("img/home.png"));
+        __homeBtn.setIcon(new ImageIcon("system/img/home.png"));
         __homeBtn.setBorder(emptyBorder);
         
         // set top control panel which keeps undo and home buttons 
@@ -209,7 +227,7 @@ public class GamePanel extends JPanel {
         Border emptyBorder = BorderFactory.createEmptyBorder();
 
         __nextMovBtn = new JButton();
-        __nextMovBtn.setIcon(new ImageIcon("img/playAuto.png"));
+        __nextMovBtn.setIcon(new ImageIcon("system/img/playAuto.png"));
         __nextMovBtn.setBackground(ColorScheme.BLACK.getColor());
         __nextMovBtn.setBorder(emptyBorder);
 
@@ -221,14 +239,13 @@ public class GamePanel extends JPanel {
                 if (isGameOver())
                     displayGameOverMessage();
             }
-            
         });
 
         __saveGameBtn = new JButton();
-        __saveGameBtn.setIcon(new ImageIcon("img/save.png"));
+        __saveGameBtn.setIcon(new ImageIcon("system/img/save.png"));
         __saveGameBtn.setBackground(ColorScheme.BLACK.getColor());
         __saveGameBtn.setBorder(emptyBorder);
-        __saveGameBtn.addActionListener(saveButtonHandler);
+        __saveGameBtn.addActionListener(SAVE_EVENT_HANDLER);
         
         if (__gameMode == GameMode.COMPUTER) {
             __nextMovBtn.setEnabled(false);
@@ -244,172 +261,6 @@ public class GamePanel extends JPanel {
         add(__bottomControlPanel, BorderLayout.SOUTH);
     }
 
-    /**
-     * Sets the game board
-     * @param board type
-     */
-    public void setGameBoard (BoardType t) {
-        if (__boardPanel != null)
-            remove(__boardPanel);
-            
-        // set Board Panel (keeps each buttons to represent cells of PegSolitaire)
-        __boardPanel = new JPanel();
-        __boardPanel.setBackground(ColorScheme.BLACK.getColor());
-        __boardPanel.setBorder(null);
-        switch (t) {
-            case FRENCH: 
-                setFrenchBoard();break;
-            case GERMAN: 
-                setGermanBoard(); break;
-            case ASYMETRICAL:
-                setAsymmetricalBoard();break;
-            case ENGLISH: 
-                setEnglishBoard(); break;
-            case DIAMOND: 
-                setDiamondBoard(); break;
-            case TRIANGULAR: 
-                setTriangleBoard(); break;
-        }
-
-        add(__boardPanel);  // add board panel to the JFrame
-        __numOfMov = 0;
-        __numOfPeg = numOfPeg();
-
-        // reset/init movement for new board
-        __curMov = new Movement(__board);
-        __allMov = new Stack<Movement>();
-    }
-
-    private void setGermanBoard() {
-        __boardPanel.setLayout(new GridLayout(9, 9)); 
-        __board = new Cell[9][9];
-
-        final CellType cellValue[][] = {
-            {CellType.WALL, CellType.WALL, CellType.WALL, CellType.PEG, CellType.PEG, CellType.PEG, CellType.WALL, CellType.WALL, CellType.WALL},
-            {CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG}
-        };
-
-        for (int i = 0; i < __board.length; ++i) {
-            int col = (3 <= i && i <= 5) ? 1 : 0;
-
-            for (int j = 0; j < __board[i].length; ++j)
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);    
-        }
-        __board[4][4].setCellType(CellType.EMPTY);
-    }
-
-    private void setFrenchBoard () {
-        __boardPanel.setLayout(new GridLayout(7, 7));
-        __board = new Cell[7][7];
-
-        for (int i = 0, n = 2, m = 5; i < 2; ++i, --n, ++m) {
-            for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-            
-            for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-            for (int j = m; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-        }
-
-        for (int i = 2; i < 5; ++i)
-            for (int j = 0; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-        for (int i = 5, n = 1, m = 6; i < 7; ++i, ++n, --m) {
-            for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-            
-            for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-            for (int j = m; j < 7; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-        }
-
-        __board[2][3].setCellType(CellType.EMPTY);
-    }
-
-    private void setAsymmetricalBoard () {
-        __boardPanel.setLayout(new GridLayout(8, 8)); 
-        __board = new Cell[8][8];
-
-        final CellType cellValue[][] = {
-            {CellType.WALL, CellType.WALL, CellType.PEG, CellType.PEG, CellType.PEG, CellType.WALL, CellType.WALL, CellType.WALL},
-            {CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG}
-        };
-
-        for (int i = 0; i < __board.length; ++i) {
-            int col = (3 <= i && i <= 5) ? 1 : 0;
-            for (int j = 0; j < __board[i].length; ++j) 
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);  
-        }
-        __board[4][3].setCellType(CellType.EMPTY);
-    }
-
-    private void setEnglishBoard () {
-        __boardPanel.setLayout(new GridLayout(7, 7)); 
-        __board = new Cell[7][7];
-
-        final Cell.CellType cellValue[][] = {
-            {CellType.WALL, CellType.WALL, CellType.PEG, CellType.PEG, CellType.PEG, CellType.WALL, CellType.WALL},
-            {CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG, CellType.PEG}
-        };
-
-        for (int i = 0; i < __board.length; ++i) {
-            int col = (2 <= i && i <= 4) ? 1 : 0;
-            for (int j = 0; j < __board[i].length; ++j) 
-                __board[i][j] = new Cell(cellValue[col][j], __boardPanel, gamePlayEventHandler);  
-        }
-        __board[3][3].setCellType(CellType.EMPTY);
-    }
-    
-    private void setDiamondBoard () {
-        __boardPanel.setLayout(new GridLayout(9, 9));
-        __board = new Cell[9][9];
-
-        for (int i = 0, n = 4, m = 5; i < 4; ++i, --n, ++m) {
-            for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-
-            for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-            for (int j = m; j < 9; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-        }
-
-        for (int i = 0; i < 9; ++i)
-            __board[4][i] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-        for (int i = 5, n = 1, m = 8; i < 9; ++i, ++n, --m) {
-            for (int j = 0; j < n; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-
-            for (int j = n; j < m; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-
-            for (int j = m; j < 9; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-        }
-        __board[4][4].setCellType(CellType.EMPTY);
-    }
-
-    private void setTriangleBoard () {
-        __boardPanel.setLayout(new GridLayout(8, 8));
-        __board = new Cell[8][8];
-
-        for (int i = 0; i < 8; ++i) {
-            for (int j = 0; j < i; ++j)
-                __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
-            for (int j = i; j < 8; ++j)
-                __board[i][j] = new Cell(CellType.WALL , __boardPanel, gamePlayEventHandler);
-        }
-        __board[0][0].setCellType(CellType.EMPTY);
-        __board[0][0].setEnabled(true);
-    } 
-    
     /**
      * Checks if game is over
      * @return true for ended game
@@ -435,10 +286,10 @@ public class GamePanel extends JPanel {
                     mov.setMovement(c, Movement.Direction.LEFT);
     }
 
-    private class SaveButtonHandler implements ActionListener {
+    private class SaveEventHandler implements ActionListener {
         private JPanel topPanel;
 
-        public SaveButtonHandler(JPanel topPanel) {this.topPanel = topPanel;}
+        public SaveEventHandler(JPanel topPanel) {this.topPanel = topPanel;}
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -602,8 +453,8 @@ public class GamePanel extends JPanel {
         try {
             FileWriter writer = new FileWriter(filename);        
             // each boards are rectangular (main boards are square, user defined ones must be rectangular)
-            writer.write(String.format("%s %d %d %d\n", 
-                __gameMode, __numOfMov, __board.length, __board[0].length));
+            writer.write(String.format("%d %d %d\n", 
+                __board.length, __board[0].length, __numOfMov));
             for (int i = 0; i < __board.length; ++i) {
                 for (int j = 0; j < __board[i].length; ++j) {
                     writer.write(__board[i][j].toString()); 
@@ -631,22 +482,14 @@ public class GamePanel extends JPanel {
         // scanner will close itself automaticly (required AutoCloseable interface)
         try (Scanner reader = new Scanner(new File(filename));) {
             // first line contains Game configurations
-            // GameMode(string), NumOfMov(int) BoardRow(int) BoardCol(int)
-            String gameMode = reader.next();
-            int numOfMov = reader.nextInt(); 
+            // BoardRow(int) BoardCol(int) NumOfMov(int)
             int row = reader.nextInt();
             int col = reader.nextInt();
+            int numOfMov = reader.nextInt(); 
 
             reader.nextLine();  // skip the rest of the line
 
-            if (gameMode.equals("USER"))
-                __gameMode = GameMode.USER;
-            else if (gameMode.equals("COMPUTER"))
-                __gameMode = GameMode.COMPUTER;
-            else
-                throw new IllegalArgumentException();
-
-            if (__boardPanel != null)
+            if (__boardPanel != null) // remove pre board panel to prevent multiple boardPanel
                 remove(__boardPanel);
             
             // set Board Panel (keeps each buttons to represent cells of PegSolitaire)
@@ -661,10 +504,10 @@ public class GamePanel extends JPanel {
                     // skip blank char and pass next value  
                     switch (line.charAt(j * 2)) {
                         case '.':
-                            __board[i][j] = new Cell(CellType.EMPTY , __boardPanel, gamePlayEventHandler); 
+                            __board[i][j] = new Cell(CellType.EMPTY , __boardPanel, GAME_PLAY_EVENT_HANDLER); 
                             break;
                         case 'P':
-                            __board[i][j] = new Cell(CellType.PEG, __boardPanel, gamePlayEventHandler);
+                            __board[i][j] = new Cell(CellType.PEG, __boardPanel, GAME_PLAY_EVENT_HANDLER);
                             break;
                         case ' ':
                             //! since walls are unclickable, no action listener required
@@ -675,12 +518,13 @@ public class GamePanel extends JPanel {
                     }
                 }
             }
-            // add board panel to the JFrame
-            add(__boardPanel);  
+            // set game configuration and add new board to the top panel (GamePanel)
+            __gameMode = GameMode.USER;
             __numOfMov = numOfMov;
             __numOfPeg = numOfPeg();
             __curMov = new Movement(__board);
             __allMov = new Stack<Movement>();            
+            add(__boardPanel);  
         }
         catch (FileNotFoundException e) {
             System.out.println("Something went wrong");

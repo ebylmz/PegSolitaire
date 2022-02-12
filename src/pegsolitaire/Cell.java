@@ -20,10 +20,10 @@ import javax.swing.JPanel;
 public class Cell extends JButton {
     private CellType __value;
 
-    final private ImageIcon PEG_ICON = new ImageIcon("img/pegCell.png");
-    final private ImageIcon EMPTY_ICON = new ImageIcon("img/emptyCell.png");
-    final private ImageIcon SELECTED_ICON = new ImageIcon("img/selectedCell.png");
-    final private ImageIcon POSSIBLE_ICON = new ImageIcon("img/possibleCell.png");
+    final private ImageIcon PEG_ICON = new ImageIcon("system/img/pegCell.png");
+    final private ImageIcon EMPTY_ICON = new ImageIcon("system/img/emptyCell.png");
+    final private ImageIcon SELECTED_ICON = new ImageIcon("system/img/selectedCell.png");
+    final private ImageIcon POSSIBLE_ICON = new ImageIcon("system/img/possibleCell.png");
 
     /** CellType  */
     public static enum CellType {
