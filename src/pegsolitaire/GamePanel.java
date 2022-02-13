@@ -42,6 +42,8 @@ public class GamePanel extends JPanel {
 
     private final GamePlayEventHandler GAME_PLAY_EVENT_HANDLER = new GamePlayEventHandler();
     private final SaveEventHandler SAVE_EVENT_HANDLER = new SaveEventHandler(this);
+    private final String USER_BOARD_PATH = "user/gameBoards/";
+    private final String REGISTER_USER_PATH = "system/login.txt";
 
     private JPanel __boardPanel;
     private Cell __board[][]; // game board for checking validty of movement
@@ -67,7 +69,7 @@ public class GamePanel extends JPanel {
      * @param gameMode play mode of tge game
      * @param boardType board type of the game
      */
-    public GamePanel (JButton homeButton, GameMode gameMode, BoardType boardType) {
+    public GamePanel(JButton homeButton, GameMode gameMode, BoardType boardType) {
         setLayout(new BorderLayout());
         // initialize the game board selected by user
         String boardName = "";
@@ -96,7 +98,7 @@ public class GamePanel extends JPanel {
      * @param homeButton 
      * @param username username to reach player previous sections
      */
-    public GamePanel (JButton homeButton, String username) {
+    public GamePanel(JButton homeButton, String username) {
         setLayout(new BorderLayout());
         // first set Top control panel because loadGame function
         // uses homeButton in case of any exceptions to return the main menu
@@ -111,9 +113,9 @@ public class GamePanel extends JPanel {
      * @param password
      * @return 0 for registered, 1 for non-registered, 2 for registered but wrong password 
      */
-    public int isRegistered (String username, String password) {
+    public int isRegistered(String username, String password) {
         int status = 1; // assume user is not registered
-        try (Scanner reader = new Scanner(new File("user/login.txt"));) {
+        try (Scanner reader = new Scanner(new File(REGISTER_USER_PATH));) {
 
             while (reader.hasNextLine() && status == 1) {
                 String[] user = reader.nextLine().split(", ");
@@ -133,9 +135,9 @@ public class GamePanel extends JPanel {
      * @param username
      * @param password
      */
-    public void registerUser (String username, String password) {
+    public void registerUser(String username, String password) {
         // open file in append mode
-        try (FileWriter writer = new FileWriter("user/login.txt", true);) {
+        try (FileWriter writer = new FileWriter(REGISTER_USER_PATH, true);) {
             writer.write(String.format("%s, %s\n", username, password));
         }
         catch (IOException e) {
@@ -145,16 +147,16 @@ public class GamePanel extends JPanel {
     }
 
     /*** Game score */
-    public double score () {
+    public double score() {
         // max score is 100 (when 1 peg left)
         return (double) numOfPeg() / 100.0;
     }
 
     /*** Number of movement that made so far */
-    public int numOfMov () {return __numOfMov;}
+    public int numOfMov() {return __numOfMov;}
 
     /*** Number of remaining peg */
-    public int numOfPeg () {
+    public int numOfPeg() {
         int n = 0;
         for (int i = 0; i < __board.length; ++i)
             for (int j = 0; j < __board[i].length; ++j)
@@ -164,7 +166,7 @@ public class GamePanel extends JPanel {
     }
 
     /*** SaveGame game button*/
-    public JButton saveGameButton () {return __saveGameBtn;}
+    public JButton saveGameButton() {return __saveGameBtn;}
 
     /*** Game board*/
     public Cell[][] gameBoard() {return __board;}
@@ -173,17 +175,17 @@ public class GamePanel extends JPanel {
     public GameMode gameMode() {return __gameMode;}
 
     /*** All the movement that made so far*/
-    public Stack<Movement> allMovements () {return __allMov;}
+    public Stack<Movement> allMovements() {return __allMov;}
 
     /*** Current movement */
-    public Movement curMovement () {return __curMov;}
+    public Movement curMovement() {return __curMov;}
 
     /**
      * Sets the top of the game panel
      * which contains undo and home buttons
      * @param homeButton
      */
-    private void setTopControlPanel (final JButton homeButton) {
+    private void setTopControlPanel(final JButton homeButton) {
         Border emptyBorder = BorderFactory.createEmptyBorder();
         
         // add undo button
@@ -223,7 +225,7 @@ public class GamePanel extends JPanel {
     /**
      * Sets bottom control panel which contains auto movement and saveGame button
      */
-    private void setBottomControlPanel () {
+    private void setBottomControlPanel() {
         Border emptyBorder = BorderFactory.createEmptyBorder();
 
         __nextMovBtn = new JButton();
@@ -235,7 +237,7 @@ public class GamePanel extends JPanel {
         __nextMovBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                moveRandom();
+                makeRandomMove();
                 if (isGameOver())
                     displayGameOverMessage();
             }
@@ -265,7 +267,7 @@ public class GamePanel extends JPanel {
      * Checks if game is over
      * @return true for ended game
      */
-    public boolean isGameOver () {
+    public boolean isGameOver() {
         for (int i = 0; i < __board.length; ++i)
             for (var cell : __board[i])
                 if (canMakeMovement(cell))
@@ -278,7 +280,7 @@ public class GamePanel extends JPanel {
      * @param btn
      * @return true for valid movement
      */
-    public boolean canMakeMovement (Cell c) {
+    public boolean canMakeMovement(Cell c) {
         Movement mov = new Movement(__board, c);
         return      mov.setMovement(c, Movement.Direction.UP) ||
                     mov.setMovement(c, Movement.Direction.DOWN) ||
@@ -306,12 +308,12 @@ public class GamePanel extends JPanel {
                     else {
                         switch (isRegistered(username, password)) {
                             case 0: // registered user
-                                saveGame("user/boards/" + username + ".txt");
+                                saveGame(USER_BOARD_PATH + username + ".txt");
                                 done = true;
                                 break;
                             case 1: // non-registered user
                                 registerUser(username, password);
-                                saveGame("user/boards/" + username + ".txt");
+                                saveGame(USER_BOARD_PATH + username + ".txt");
                                 done = true;
                                 break;
                             case 2: // registered but wrong password
@@ -353,7 +355,7 @@ public class GamePanel extends JPanel {
                 // set hover effect on selected cell
                 __curMov.setEnd(selectedCell);
                 // apply movement
-                if (move(__curMov)) {
+                if (makeMove(__curMov)) {
                     if (isGameOver())
                         displayGameOverMessage();
                 }
@@ -372,7 +374,7 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void displayGameOverMessage () {
+    private void displayGameOverMessage() {
         JOptionPane.showMessageDialog(this, String.format(
             // "      Game is over\n" + 
             "Number of Movement: %d\n" + 
@@ -386,7 +388,7 @@ public class GamePanel extends JPanel {
      * @param mov
      * @return true for valid movement
      */
-    public boolean move (Movement mov) {
+    public boolean makeMove(Movement mov) {
         if (mov.isValidMovement()) {
             mov.start().setCellType(CellType.EMPTY);
             mov.jump().setCellType(CellType.EMPTY);
@@ -411,10 +413,10 @@ public class GamePanel extends JPanel {
      * Applies random movement 
      * @return false if there is no movement left means when the game is over
      */
-    public boolean moveRandom () {
+    public boolean makeRandomMove() {
         Movement mov = new Movement(__board); 
         if (mov.setRandomMovement()) {
-            move(mov);
+            makeMove(mov);
             return true;
         }
         return false;
@@ -424,7 +426,7 @@ public class GamePanel extends JPanel {
      * undo last movement
      * @return false if there is no previos movement made
      */
-    public boolean undo () {
+    public boolean undo() {
         // if there is a valid movement made before, apply reverse of it
         if (__undoBtn.isEnabled()) {
             Movement lastMov = __allMov.pop();
@@ -449,7 +451,7 @@ public class GamePanel extends JPanel {
      * Saves the current game status (board, numOfMov, etc.) to the given file
      * @param filename
      */
-    public void saveGame (String filename) {
+    public void saveGame(String filename) {
         try {
             FileWriter writer = new FileWriter(filename);        
             // each boards are rectangular (main boards are square, user defined ones must be rectangular)
@@ -478,7 +480,7 @@ public class GamePanel extends JPanel {
      * Loads the game status (board, numOfMov, etc.) from the given file
      * @param filename
      */
-    public void loadGame (String filename) {
+    public void loadGame(String filename) {
         // scanner will close itself automaticly (required AutoCloseable interface)
         try (Scanner reader = new Scanner(new File(filename));) {
             // first line contains Game configurations
@@ -510,7 +512,7 @@ public class GamePanel extends JPanel {
                             __board[i][j] = new Cell(CellType.PEG, __boardPanel, GAME_PLAY_EVENT_HANDLER);
                             break;
                         case ' ':
-                            //! since walls are unclickable, no action listener required
+                            // since walls are unclickable, no action listener required
                             __board[i][j] = new Cell(CellType.WALL , __boardPanel, null);   
                             break;
                         default:

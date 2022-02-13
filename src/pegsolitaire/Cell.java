@@ -81,6 +81,9 @@ public class Cell extends JButton {
             setEnabled(false);  // set wall button as non-clickable
     }
 
+    /**
+     * make cell selected by applying hover effect
+     */
     public void setSelected(boolean selected) {
         if (selected)
             setIcon(SELECTED_ICON);
@@ -88,6 +91,9 @@ public class Cell extends JButton {
             setIcon(__value == CellType.PEG ? PEG_ICON : EMPTY_ICON);
     }
 
+    /**
+     * make cell possibke by applying hover effect
+     */
     public void setPossible(boolean isPossible) {
         if (isPossible)
             setIcon(POSSIBLE_ICON);

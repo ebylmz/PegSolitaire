@@ -61,7 +61,7 @@ public class Movement implements Cloneable {
      * Returns all the possible movements that can start position made
      * @return all the possible movements
      */
-    public Vector<Cell> nextPossibleMov () {
+    public Vector<Cell> nextPossibleMov() {
         Vector<Cell> v = new Vector<Cell>();
         if (start() != null)
             for (Direction d : Direction.values())
@@ -159,7 +159,7 @@ public class Movement implements Cloneable {
      * @return true if there is a valid movement at given direction for start position
      * @throws InvalidParameterException
      */
-    public boolean setMovement (Cell start, Direction d) throws InvalidParameterException {
+    public boolean setMovement(Cell start, Direction d) throws InvalidParameterException {
         try {
             setStart(start);    // can throw InvalidParameterException
             boolean r = false;
@@ -190,7 +190,7 @@ public class Movement implements Cloneable {
      * Sets random valid movement
      * @return false if there is no movement left means if game is over
      */
-    public boolean setRandomMovement () {
+    public boolean setRandomMovement() {
         Random rand = new Random();
         // choose an random starting position
         int row = rand.nextInt(__board.length);
@@ -269,7 +269,7 @@ public class Movement implements Cloneable {
         return false;
     }
 
-    private boolean isProperJumpEndCell (Cell jump, Cell end) {
+    private boolean isProperJumpEndCell(Cell jump, Cell end) {
         return jump.getCellType() == CellType.PEG && end.getCellType() == CellType.EMPTY;
     }
 
@@ -292,7 +292,7 @@ public class Movement implements Cloneable {
      * @return if button exist in the game board [0]: row, [1]: col, else null
      * @throws NullPointerException
      */
-    public int[] findLocation (Cell cell) throws NullPointerException {
+    public int[] findLocation(Cell cell) throws NullPointerException {
         int indexes[] = null;
         if (__board != null && cell != null) {
             for (int i = 0; i < __board.length && indexes == null; ++i)
@@ -306,7 +306,7 @@ public class Movement implements Cloneable {
         return indexes;
     }
 
-    public Movement clone () {
+    public Movement clone() {
         try {
             Movement r = (Movement) super.clone();
             r.__board = __board;
